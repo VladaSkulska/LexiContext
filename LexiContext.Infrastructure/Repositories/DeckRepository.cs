@@ -1,6 +1,7 @@
 ﻿using LexiContext.Domain.Entities;
 using LexiContext.Application.Interfaces;
 using LexiContext.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace LexiContext.Infrastructure.Repositories
 {
@@ -18,6 +19,16 @@ namespace LexiContext.Infrastructure.Repositories
             await _context.SaveChangesAsync();
 
             return deck.Id;
+        }
+
+        public async Task<Deck?> GetByIdAsync(Guid id)
+        {
+            return await _context.Decks.FirstOrDefaultAsync(d => d.Id == id);
+        }
+
+        public async Task<List<Deck>> GetAllAsync()
+        {
+            return await _context.Decks.AsNoTracking().ToListAsync();
         }
     }
 }
