@@ -18,8 +18,16 @@ namespace LexiContext.API.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateDeck(CreateDeckDto requestDto)
         {
-            var id = await _deckService.CreateDeckAsync(requestDto);
-            return Ok(id);
+            try
+            {
+                var createdDeck = await _deckService.CreateDeckAsync(requestDto);
+
+                return CreatedAtAction(nameof(GetDeckById), new { id = createdDeck.Id }, createdDeck);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
         }
 
         [HttpGet("{id}")]
@@ -27,9 +35,9 @@ namespace LexiContext.API.Controllers
         {
             var result = await _deckService.GetDeckByIdAsync(id);
 
-            if(result == null)
+            if (result == null)
             {
-                return NotFound($"Колоду з ID {result} не знайдено");
+                return NotFound($"Deck with ID {id} is not found");
             }
 
             return Ok(result);
@@ -40,6 +48,39 @@ namespace LexiContext.API.Controllers
         {
             var result = await _deckService.GetAllDecksAsync();
             return Ok(result);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateDeck(Guid id, UpdateDeckDto deckDto)
+        {
+            try
+            {
+                var result = await _deckService.UpdateDeckAsync(id, deckDto);
+
+                if (result == null)
+                {
+                    return NotFound($"Deck with ID {id} is not found");
+                }
+
+                return Ok(result);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteDeck(Guid id)
+        {
+            var isDeleted = await _deckService.DeleteDeckAsync(id);
+
+            if (!isDeleted)
+            {
+                return NotFound($"Deck with ID {id} was not found to be deleted");
+            }
+
+            return NoContent();
         }
     }
 }

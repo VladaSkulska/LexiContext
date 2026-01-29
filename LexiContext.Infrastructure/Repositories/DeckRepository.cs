@@ -30,5 +30,19 @@ namespace LexiContext.Infrastructure.Repositories
         {
             return await _context.Decks.AsNoTracking().ToListAsync();
         }
+
+        public async Task UpdateAsync(Deck deck)
+        {
+            _context.Decks.Update(deck);
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteAsync(Deck deck)
+        {
+            _context.Decks.Remove(deck);
+
+            await _context.SaveChangesAsync();
+        }
     }
 }

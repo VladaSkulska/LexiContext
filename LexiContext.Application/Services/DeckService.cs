@@ -14,6 +14,21 @@ namespace LexiContext.Application.Services
         }
         public async Task<DeckDto> CreateDeckAsync(CreateDeckDto dto)
         {
+            if (string.IsNullOrWhiteSpace(dto.Title))
+            {
+                throw new ArgumentException("Deck Title can't be null.");
+            }
+
+            if (dto.Title.Length > 100)
+            {
+                throw new ArgumentException("Deck Title is too long (max 100 symbols).");
+            }
+
+            if (dto.Description?.Length > 500)
+            {
+                throw new ArgumentException("Deck description is too long (max 500 symbols).");
+            }
+
             Deck deckEntity = new Deck
             {
                 Title = dto.Title,
@@ -37,7 +52,7 @@ namespace LexiContext.Application.Services
             };
         }
 
-        public async Task<DeckDto> GetDeckByIdAsync(Guid id)
+        public async Task<DeckDto?> GetDeckByIdAsync(Guid id)
         {
             var deckEntity = await _deckRepository.GetByIdAsync(id);
 
@@ -72,6 +87,53 @@ namespace LexiContext.Application.Services
                 TargetLanguage = deckEntity.TargetLanguage,
                 NativeLanguage = deckEntity.NativeLanguage
             }).ToList();
+        }
+
+        public async Task<DeckDto?> UpdateDeckAsync(Guid id, UpdateDeckDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Title))
+            {
+                throw new ArgumentException("Deck Title can't be null.");
+            }
+
+            if (dto.Title.Length > 100)
+            {
+                throw new ArgumentException("Deck Title is too long (max 100 symbols).");
+            }
+
+            if (dto.Description?.Length > 500)
+            {
+                throw new ArgumentException("Deck description is too long (max 500 symbols).");
+            }
+
+            var entity = await _deckRepository.GetByIdAsync(id);
+
+            if (entity == null) return null;
+
+            entity.Title = dto.Title;
+            entity.Description = dto.Description ?? string.Empty;
+            entity.IsPublic = dto.IsPublic;
+
+            await _deckRepository.UpdateAsync(entity);
+
+            return new DeckDto
+            {
+                Id = entity.Id,
+                Title = entity.Title,
+                Description = entity.Description,
+                IsPublic = entity.IsPublic,
+                CreatedAt = entity.CreatedAt,
+                TargetLanguage = entity.TargetLanguage,
+                NativeLanguage = entity.NativeLanguage
+            };
+        }
+
+        public async Task<bool> DeleteDeckAsync(Guid id)
+        {
+            var entity =  await _deckRepository.GetByIdAsync(id);
+            if (entity == null) return false;
+            await _deckRepository.DeleteAsync(entity);
+            return true;
         }
     }
 }
