@@ -1,44 +1,48 @@
-﻿using LexiContext.Application.DTOs.Decks;
+﻿using ValidationException = LexiContext.Domain.Exceptions.ValidationException;
+using LexiContext.Application.DTOs.Decks;
 using LexiContext.Application.Interfaces;
 using LexiContext.Application.Services.Interfaces;
 using LexiContext.Domain.Entities;
+using LexiContext.Domain.Exceptions;
+using FluentValidation;
 
 namespace LexiContext.Application.Services
 {
     public class DeckService : IDeckService
     {
         private readonly IDeckRepository _deckRepository;
-        public DeckService(IDeckRepository deckRepository)
+
+        private readonly IValidator<CreateDeckDto> _createDeckValidator;
+        private readonly IValidator<UpdateDeckDto> _updateDeckValidator;
+
+        public DeckService(IDeckRepository deckRepository, 
+            IValidator<CreateDeckDto> createValidator, 
+            IValidator<UpdateDeckDto> updateDeckValidator)
         {
             _deckRepository = deckRepository;
+            _updateDeckValidator = updateDeckValidator;
+            _createDeckValidator = createValidator;
         }
         public async Task<DeckDto> CreateDeckAsync(CreateDeckDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.Title))
-            {
-                throw new ArgumentException("Deck Title can't be null.");
-            }
+            var validationResult = await _createDeckValidator.ValidateAsync(dto);
 
-            if (dto.Title.Length > 100)
+            if(!validationResult.IsValid)
             {
-                throw new ArgumentException("Deck Title is too long (max 100 symbols).");
-            }
-
-            if (dto.Description?.Length > 500)
-            {
-                throw new ArgumentException("Deck description is too long (max 500 symbols).");
+                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
+                throw new ValidationException(errors);
             }
 
             Deck deckEntity = new Deck
             {
                 Title = dto.Title,
-                Description =dto.Description ?? string.Empty,
+                Description = dto.Description ?? string.Empty,
                 IsPublic = dto.IsPublic,
                 TargetLanguage = dto.TargetLanguage,
                 NativeLanguage = dto.NativeLanguage
             };
 
-            var newId = await _deckRepository.CreateAsync(deckEntity);
+            await _deckRepository.CreateAsync(deckEntity);
 
             return new DeckDto
             {
@@ -52,14 +56,12 @@ namespace LexiContext.Application.Services
             };
         }
 
-        public async Task<DeckDto?> GetDeckByIdAsync(Guid id)
+        public async Task<DeckDto> GetDeckByIdAsync(Guid id)
         {
             var deckEntity = await _deckRepository.GetByIdAsync(id);
 
             if (deckEntity == null)
-            {
-                return null;
-            }
+                throw new NotFoundException("Deck", id);
 
             return new DeckDto
             {
@@ -89,26 +91,20 @@ namespace LexiContext.Application.Services
             }).ToList();
         }
 
-        public async Task<DeckDto?> UpdateDeckAsync(Guid id, UpdateDeckDto dto)
+        public async Task<DeckDto> UpdateDeckAsync(Guid id, UpdateDeckDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.Title))
-            {
-                throw new ArgumentException("Deck Title can't be null.");
-            }
+            var validationResult = await _updateDeckValidator.ValidateAsync(dto);
 
-            if (dto.Title.Length > 100)
+            if(!validationResult.IsValid)
             {
-                throw new ArgumentException("Deck Title is too long (max 100 symbols).");
-            }
-
-            if (dto.Description?.Length > 500)
-            {
-                throw new ArgumentException("Deck description is too long (max 500 symbols).");
+                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
+                throw new ValidationException(errors);
             }
 
             var entity = await _deckRepository.GetByIdAsync(id);
 
-            if (entity == null) return null;
+            if (entity == null)
+                throw new NotFoundException("Deck", id);
 
             entity.Title = dto.Title;
             entity.Description = dto.Description ?? string.Empty;
@@ -128,12 +124,12 @@ namespace LexiContext.Application.Services
             };
         }
 
-        public async Task<bool> DeleteDeckAsync(Guid id)
+        public async Task DeleteDeckAsync(Guid id)
         {
             var entity =  await _deckRepository.GetByIdAsync(id);
-            if (entity == null) return false;
+            if (entity == null) 
+                throw new NotFoundException("Deck", id);
             await _deckRepository.DeleteAsync(entity);
-            return true;
         }
     }
 }

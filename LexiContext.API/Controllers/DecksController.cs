@@ -18,28 +18,14 @@ namespace LexiContext.API.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateDeck(CreateDeckDto requestDto)
         {
-            try
-            {
-                var createdDeck = await _deckService.CreateDeckAsync(requestDto);
-
-                return CreatedAtAction(nameof(GetDeckById), new { id = createdDeck.Id }, createdDeck);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
+            var createdDeck = await _deckService.CreateDeckAsync(requestDto);
+            return CreatedAtAction(nameof(GetDeckById), new { id = createdDeck.Id }, createdDeck);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetDeckById(Guid id)
         {
             var result = await _deckService.GetDeckByIdAsync(id);
-
-            if (result == null)
-            {
-                return NotFound($"Deck with ID {id} is not found");
-            }
-
             return Ok(result);
         }
 
@@ -53,33 +39,14 @@ namespace LexiContext.API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateDeck(Guid id, UpdateDeckDto deckDto)
         {
-            try
-            {
-                var result = await _deckService.UpdateDeckAsync(id, deckDto);
-
-                if (result == null)
-                {
-                    return NotFound($"Deck with ID {id} is not found");
-                }
-
-                return Ok(result);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
+            var result = await _deckService.UpdateDeckAsync(id, deckDto);
+            return Ok(result);
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteDeck(Guid id)
         {
-            var isDeleted = await _deckService.DeleteDeckAsync(id);
-
-            if (!isDeleted)
-            {
-                return NotFound($"Deck with ID {id} was not found to be deleted");
-            }
-
+            await _deckService.DeleteDeckAsync(id);
             return NoContent();
         }
     }
