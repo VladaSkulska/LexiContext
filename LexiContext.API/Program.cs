@@ -1,10 +1,13 @@
-using LexiContext.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
+using FluentValidation;
+using LexiContext.API.Middlewares;
 using LexiContext.Application.Interfaces;
-using LexiContext.Infrastructure.Repositories;
-using System.Text.Json.Serialization;
 using LexiContext.Application.Services;
 using LexiContext.Application.Services.Interfaces;
+using LexiContext.Application.Validators;
+using LexiContext.Infrastructure.Persistence;
+using LexiContext.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +18,9 @@ builder.Services.AddControllers()
     {
         option.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+
+builder.Services.AddValidatorsFromAssemblyContaining<CreateDeckValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<UpdateDeckValidator>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -28,6 +34,7 @@ options.UseNpgsql(connectionString));
 builder.Services.AddScoped<IDeckRepository, DeckRepository>();
 builder.Services.AddScoped<IDeckService, DeckService>();
 var app = builder.Build();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
