@@ -42,7 +42,9 @@ namespace LexiContext.Application.Services
                 NativeLanguage = dto.NativeLanguage
             };
 
-            await _deckRepository.CreateAsync(deckEntity);
+            var createdId = await _deckRepository.CreateAsync(deckEntity);
+
+            deckEntity.Id = createdId;
 
             return new DeckDto
             {
