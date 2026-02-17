@@ -21,6 +21,8 @@ builder.Services.AddControllers()
 
 builder.Services.AddValidatorsFromAssemblyContaining<CreateDeckValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<UpdateDeckValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateCardDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<UpdateCardDtoValidator>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -33,6 +35,10 @@ options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IDeckRepository, DeckRepository>();
 builder.Services.AddScoped<IDeckService, DeckService>();
+
+builder.Services.AddScoped<ICardRepository, CardRepository>();
+builder.Services.AddScoped<ICardService, CardService>();
+
 var app = builder.Build();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
