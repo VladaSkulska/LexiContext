@@ -13,7 +13,7 @@ namespace LexiContext.Domain.Entities
         public Card? Card { get; set; }
 
         // SM-2
-        public int Box {  get; set; }
+        public int Repetitions { get; set; }
         public double EaseFactor { get; set; } = 2.5;
         public int IntervalDays { get; set; } 
 

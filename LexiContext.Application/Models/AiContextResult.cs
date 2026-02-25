@@ -1,0 +1,8 @@
+﻿namespace LexiContext.Application.Models
+{
+    public record AiContextResult
+    (
+        string GeneratedContext,
+        string ContextTranslation
+    );
+}

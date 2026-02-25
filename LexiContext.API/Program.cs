@@ -24,6 +24,8 @@ builder.Services.AddValidatorsFromAssemblyContaining<UpdateDeckValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCardDtoValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<UpdateCardDtoValidator>();
 
+builder.Services.AddHttpClient<IAiContextService, AiContextService>();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
