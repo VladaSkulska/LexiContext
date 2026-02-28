@@ -39,7 +39,9 @@ namespace LexiContext.Application.Services
                 Description = dto.Description ?? string.Empty,
                 IsPublic = dto.IsPublic,
                 TargetLanguage = dto.TargetLanguage,
-                NativeLanguage = dto.NativeLanguage
+                NativeLanguage = dto.NativeLanguage,
+                ProficiencyLevel = dto.ProficiencyLevel,
+                Tone = dto.Tone
             };
 
             var createdId = await _deckRepository.CreateAsync(deckEntity);
@@ -54,7 +56,9 @@ namespace LexiContext.Application.Services
                 IsPublic = deckEntity.IsPublic,
                 CreatedAt = deckEntity.CreatedAt,
                 TargetLanguage = deckEntity.TargetLanguage,
-                NativeLanguage = deckEntity.NativeLanguage
+                NativeLanguage = deckEntity.NativeLanguage,
+                ProficiencyLevel = deckEntity.ProficiencyLevel,
+                Tone = deckEntity.Tone
             };
         }
 
@@ -73,7 +77,9 @@ namespace LexiContext.Application.Services
                 IsPublic = deckEntity.IsPublic,
                 CreatedAt = deckEntity.CreatedAt,
                 TargetLanguage = deckEntity.TargetLanguage,
-                NativeLanguage = deckEntity.NativeLanguage
+                NativeLanguage = deckEntity.NativeLanguage,
+                ProficiencyLevel = deckEntity.ProficiencyLevel,
+                Tone = deckEntity.Tone
             };
         }
 
@@ -89,7 +95,9 @@ namespace LexiContext.Application.Services
                 IsPublic = deckEntity.IsPublic,
                 CreatedAt = deckEntity.CreatedAt,
                 TargetLanguage = deckEntity.TargetLanguage,
-                NativeLanguage = deckEntity.NativeLanguage
+                NativeLanguage = deckEntity.NativeLanguage,
+                ProficiencyLevel = deckEntity.ProficiencyLevel,
+                Tone = deckEntity.Tone
             }).ToList();
         }
 
@@ -122,7 +130,9 @@ namespace LexiContext.Application.Services
                 IsPublic = entity.IsPublic,
                 CreatedAt = entity.CreatedAt,
                 TargetLanguage = entity.TargetLanguage,
-                NativeLanguage = entity.NativeLanguage
+                NativeLanguage = entity.NativeLanguage,
+                ProficiencyLevel = entity.ProficiencyLevel,
+                Tone = entity.Tone
             };
         }
 

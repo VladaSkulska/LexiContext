@@ -44,6 +44,13 @@ namespace LexiContext.API.Controllers
             return Ok(result);
         }
 
+        [HttpPatch("{id}/simplify")]
+        public async Task<ActionResult<CardDto>> SimplifyCard(Guid id)
+        {
+            var result = await _cardService.SimplifyCardAsync(id);
+            return Ok(result);
+        }   
+
         [HttpDelete("{id}")]    
         public async Task<IActionResult> DeleteCard(Guid id)
         {

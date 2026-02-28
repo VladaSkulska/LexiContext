@@ -55,6 +55,18 @@ namespace LexiContext.API.Middlewares
                     Message = exception.Message
                 },
 
+                AiTranslationException => new ErrorDetails
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Message = "The AI service is temporarily unavailable or unable to process the word. Please enter the translation manually."
+                },
+
+                InvalidOperationException e when e.Message.Contains("AI") || e.Message.Contains("translation") => new ErrorDetails
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Message = "AI magic didn't work. Please fill in the fields manually."
+                },
+
                 _ => new ErrorDetails
                 {
                     StatusCode = StatusCodes.Status500InternalServerError,

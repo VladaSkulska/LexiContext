@@ -15,7 +15,7 @@ namespace LexiContext.Domain.Entities
         public LearningLanguage NativeLanguage { get; set; } = LearningLanguage.Ukrainian;
 
         // AI Settings
-        public ProficiencyLevel Level { get; set; } = ProficiencyLevel.Beginner;
+        public ProficiencyLevel ProficiencyLevel { get; set; } = ProficiencyLevel.Beginner;
         public AiTone Tone { get; set; } = AiTone.Neutral;
 
         

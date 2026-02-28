@@ -12,5 +12,16 @@ namespace LexiContext.Application.Services.Interfaces
             ProficiencyLevel level,
             string deckContext,
             AiTone tone);
+
+        Task<string> TranslateWordAsync(string word, 
+            LearningLanguage learningLanguage, 
+            LearningLanguage nativeLanguage);
+
+        Task<AiContextResult> SimplifyContextAsync(
+            string word,
+            string originalContext,
+            LearningLanguage learningLanguage,
+            LearningLanguage nativeLanguage,
+            ProficiencyLevel simplerLevel);
     }
 }

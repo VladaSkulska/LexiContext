@@ -13,5 +13,9 @@ namespace LexiContext.Application.DTOs.Decks
         // localization
         public LearningLanguage TargetLanguage { get; set; }
         public LearningLanguage NativeLanguage { get; set; }
+        
+        // AI Personalization
+        public ProficiencyLevel ProficiencyLevel { get; set; }
+        public AiTone Tone { get; set; }
     }
 }

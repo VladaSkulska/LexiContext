@@ -12,8 +12,9 @@ namespace LexiContext.Application.Validators
                 .MaximumLength(200).WithMessage("Word is too long.");
 
             RuleFor(x => x.Back)
-                .NotEmpty().WithMessage("Back side (translation) cannot be empty.")
-                .MaximumLength(200).WithMessage("Translation is too long.");
+                .NotEmpty()
+                .Unless(x => x.GenerateAiContext)
+                .WithMessage("Back side (translation) cannot be empty if AI generation is disabled.");
 
             RuleFor(x => x.DeckId)
                 .NotEmpty().WithMessage("DeckId is required.");

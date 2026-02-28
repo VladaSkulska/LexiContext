@@ -9,5 +9,6 @@ namespace LexiContext.Application.Services.Interfaces
         public Task<List<CardDto>> GetCardsByDeckIdAsync(Guid deckId);
         public Task<CardDto> UpdateCardAsync(Guid id, UpdateCardDto dto);
         public Task DeleteCardAsync(Guid id);
+        public Task<CardDto> SimplifyCardAsync(Guid id);
     }
 }

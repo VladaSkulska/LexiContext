@@ -9,7 +9,7 @@
         Spanish = 4,
         French = 5,
         Italian = 6,
-        Chinese = 7,  // Mandarin
+        Chinese = 7,
         Japanese = 8
     }
 }

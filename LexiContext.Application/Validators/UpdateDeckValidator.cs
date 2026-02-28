@@ -13,6 +13,12 @@ namespace LexiContext.Application.Validators
 
             RuleFor(x => x.Description)
                 .MaximumLength(500).WithMessage("Deck description is too long (max 500 symbols).");
+
+            RuleFor(x => x.ProficiencyLevel)
+                .IsInEnum().WithMessage("Invalid proficiency level.");
+
+            RuleFor(x => x.Tone)
+                .IsInEnum().WithMessage("Invalid AI tone.");
         }
     }
 }

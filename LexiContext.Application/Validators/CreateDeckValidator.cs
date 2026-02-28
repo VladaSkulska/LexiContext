@@ -17,6 +17,10 @@ namespace LexiContext.Application.Validators
             RuleFor(x => x.NativeLanguage)
                 .IsInEnum().WithMessage("Invalid native language.")
                 .NotEqual(x => x.TargetLanguage).WithMessage("Native and Target languages cannot be the same.");
+            RuleFor(x => x.ProficiencyLevel)
+                .IsInEnum().WithMessage("Invalid proficiency level.");
+            RuleFor(x => x.Tone)
+                .IsInEnum().WithMessage("Invalid AI tone.");
         }
     }
 }
