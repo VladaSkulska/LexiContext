@@ -23,30 +23,36 @@ namespace LexiContext.Application.Services
             Target Translation Language: {5}.
 
             Strict Rules:
-            1. Complexity: Use ONLY vocabulary and grammar strictly at the '{2}' level. If '{0}' is more advanced than '{2}', explain it using basic synonyms. AVOID complex verbs and passive voice for A1-B1 levels."
+            1. Complexity: Use ONLY vocabulary and grammar strictly at the '{2}' level. If '{0}' is more advanced than '{2}', explain it using basic synonyms. AVOID complex verbs and passive voice for A1-B1 levels.
             2. Context & Theme: The sentence MUST naturally fit the "{3}" theme. Avoid "This is a {0}" style.
             3. Length: The sentence MUST be short and concise, ideally between 5 to 12 words maximum.
             4. Tone & Realism: Ensure the sentence sounds natural, not like a textbook. Tone: {4}.
             5. Accuracy: Translation into {5} must be natural, not literal.
             6. Asian Languages: If {1} is Chinese or Japanese, use appropriate Kanji/Hanzi levels for '{2}'.
-            7. Safety: No politics, religion, violence, or NSFW topics. Keep it educational.
-            8. Edge Cases (Incomplete Words, Particles, Typos): 
-               - If '{0}' is a grammatical particle, suffix, prefix, or an incomplete grammar structure (especially in {1} like Chinese or Japanese), explain its grammatical function briefly in the translation and provide a sentence showing how it attaches to a word.
-               - If '{0}' contains a clear typo, assume the most likely correct word, use the correct word in the example sentence, but do not apologize or write "you made a typo". Just provide the correct context.
+            7. Sensitive Content & Slang: Do not censor words related to conflict, anatomy, or common slang/profanity if they are part of natural language learning. However, provide a neutral, educational context. If a word is rude or offensive, explicitly label it in the 'wordTranslation' field (e.g., "вбити (neutral)", "хуйово (vulgar/slang)"). AVOID promoting hate speech or illegal acts, but define the words objectively.
+            8. Edge Cases (Particles, Prefixes, Incomplete Grammar): 
+               - If '{0}' is a grammatical particle, suffix, or prefix, DO NOT use dry linguistic terms only (like "marker" or "indicator"). 
+               - Instead, provide a friendly, pedagogical explanation of what it DOES in the 'wordTranslation' field. 
+               - Example for 'de' in Chinese: "присвійна частка (вказує на володіння чи приналежність)".
+               - The example sentence MUST show how it attaches to other words.
+               - If '{0}' contains a typo, return the corrected version in the 'correctedWord' field. If the word is already correct, 'correctedWord' should be identical to '{0}'."
             9. Phonetic Reading: 
-            - If {1} is Japanese, provide Romaji in 'contextReading'.
-            - If {1} is Chinese, provide Pinyin with tone marks in 'contextReading'.
-            - For ANY OTHER language (like German, Spanish, French, English, etc.), leave 'contextReading' strictly as an empty string "". Do NOT provide transliteration.
-            10. Word Translation: Provide the direct translation of '{0}' into {5} in the 'wordTranslation' field. 
-            - CRITICAL: If '{0}' is typically translated using a foreign loanword or technical slang in {5} (e.g., 'bug' -> 'баг', 'feature' -> 'фіча'), you MUST provide the native, widely understood word FIRST, followed by the slang in parentheses. 
-            - Example: "помилка (баг)", "особливість (фіча)".
-            
+               - If {1} is Japanese, provide Romaji in 'contextReading'.
+               - If {1} is Chinese, provide Pinyin with tone marks in 'contextReading'.
+               - For ANY OTHER language, leave 'contextReading' strictly as "".
+            10. Word Translation & Slang: Provide the translation of '{0}' into {5} in 'wordTranslation'.
+               - If it's a particle, follow Rule 8.
+               - If it's a regular word often used as a loanword/slang in {5} (e.g., 'bug' -> 'баг'), write the native word FIRST, then the slang in parentheses: "помилка (баг)".
+                - If it's rude/slang: "курва (грубо/сленг)".
+               - Use simple, "human" language that a student would easily understand.
+
             Return ONLY a valid JSON object exactly in this format: 
             {{ 
                 "generatedContext": "...", 
                 "contextTranslation": "...", 
                 "contextReading": "...",
-                "wordTranslation": "..." 
+                "wordTranslation": "...",
+                "correctedWord": "..." 
             }}
             No markdown, no prefixes.
             """;

@@ -15,7 +15,6 @@ namespace LexiContext.Application.Services
         private readonly IDeckRepository _deckRepository;
         private readonly IAiContextService _aiContextService;
         private readonly ILogger<CardService> _logger;
-
         private readonly IValidator<CreateCardDto> _createCardValidator;
         private readonly IValidator<UpdateCardDto> _updateCardValidator;
 
@@ -36,102 +35,35 @@ namespace LexiContext.Application.Services
 
         public async Task<CardDto> CreateCardAsync(CreateCardDto dto)
         {
-            var validationResult = await _createCardValidator.ValidateAsync(dto);
-            if (!validationResult.IsValid)
-            {
-                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
-                throw new Domain.Exceptions.ValidationException($"Card creation failed: {errors}");
-            }
+            await ValidateAsync(_createCardValidator, dto, "Card creation failed");
 
-            var deckExists = await _deckRepository.GetByIdAsync(dto.DeckId);
-            if (deckExists == null)
-            {
-                throw new NotFoundException("Deck", dto.DeckId);
-            }
+            var deck = await GetDeckOrThrowAsync(dto.DeckId);
 
-            string generatedContext = dto.GeneratedContext ?? string.Empty;
-            string contextTranslation = dto.ContextTranslation ?? string.Empty;
-            string contextReading = dto.ContextReading ?? string.Empty;
-            string cardBack = dto.Back ?? string.Empty;
-
-            if (dto.GenerateAiContext)
-            {
-                try
-                {
-                    var aiResult = await _aiContextService.GetAiContextAsync(
-                        word: dto.Front,
-                        learningLanguage: deckExists.TargetLanguage,
-                        nativeLanguage: deckExists.NativeLanguage,
-                        level: deckExists.ProficiencyLevel,
-                        deckContext: deckExists.Title,
-                        tone: deckExists.Tone
-                    );
-
-                    generatedContext = aiResult.GeneratedContext;
-                    contextTranslation = aiResult.ContextTranslation;
-                    contextReading = aiResult.ContextReading;
-
-                    if (string.IsNullOrWhiteSpace(cardBack))
-                    {
-                        cardBack = aiResult.WordTranslation;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to generate full AI context for word '{Word}'", dto.Front);
-                    throw new AiTranslationException("AI context generation failed. Card creation aborted.", ex);
-                }
-            }
-            else if (string.IsNullOrWhiteSpace(cardBack))
-            {
-                try
-                {
-                    cardBack = await _aiContextService.TranslateWordAsync(
-                        word: dto.Front,
-                        learningLanguage: deckExists.TargetLanguage,
-                        nativeLanguage: deckExists.NativeLanguage
-                    );
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to perform fast translation for word '{Word}'", dto.Front);
-                    throw new InvalidOperationException("Fast translation failed. Please enter the translation manually.", ex);
-                }
-            }
-
-            // Фінальна перевірка безпеки
-            if (string.IsNullOrWhiteSpace(cardBack))
-            {
-                throw new Domain.Exceptions.ValidationException("Translation (Back) cannot be empty. Please provide a translation.");
-            }
-
-            Card card = new Card
+            var card = new Card
             {
                 DeckId = dto.DeckId,
-                Front = dto.Front,
-                Back = cardBack, 
-                GeneratedContext = generatedContext,
-                ContextTranslation = contextTranslation,
-                ContextReading = contextReading,
-                ImageURL = dto.ImageURL,
-                AdditionalMetadata = dto.AdditionalMetadata
+                Front = CleanString(dto.Front),
+                Back = CleanString(dto.Back),
+                GeneratedContext = CleanString(dto.GeneratedContext),
+                ContextTranslation = CleanString(dto.ContextTranslation),
+                ContextReading = CleanString(dto.ContextReading),
+                ImageURL = CleanString(dto.ImageURL),
+                AdditionalMetadata = CleanString(dto.AdditionalMetadata)
             };
 
-            var createdCardId = await _cardRepository.CreateAsync(card);
-            card.Id = createdCardId;
+            await ProcessAiGenerationAsync(card, deck, dto.GenerateAiContext);
 
+            if (string.IsNullOrWhiteSpace(card.Back))
+                throw new Domain.Exceptions.ValidationException("Translation (Back) cannot be empty. Please provide a translation.");
+
+            card.Id = await _cardRepository.CreateAsync(card);
             return MapToCardDto(card);
         }
 
         public async Task<CardDto> GetCardByIdAsync(Guid id)
         {
-            var existingCard = await _cardRepository.GetByIdAsync(id);
-            if (existingCard == null)
-            {
-                throw new NotFoundException("Card", id);
-            }
-
-            return MapToCardDto(existingCard);
+            var card = await GetCardOrThrowAsync(id);
+            return MapToCardDto(card);
         }
 
         public async Task<List<CardDto>> GetCardsByDeckIdAsync(Guid deckId)
@@ -142,118 +74,141 @@ namespace LexiContext.Application.Services
 
         public async Task<CardDto> UpdateCardAsync(Guid id, UpdateCardDto dto)
         {
-            var validationResult = await _updateCardValidator.ValidateAsync(dto);
-            if (!validationResult.IsValid)
-            {
-                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
-                throw new Domain.Exceptions.ValidationException($"Card update failed: {errors}");
-            }
+            await ValidateAsync(_updateCardValidator, dto, "Card update failed");
 
-            var existingCard = await _cardRepository.GetByIdAsync(id);
-            if (existingCard == null)
-            {
-                throw new NotFoundException("Card", id);
-            }
+            var existingCard = await GetCardOrThrowAsync(id);
+
+            existingCard.Front = CleanString(dto.Front);
+            existingCard.Back = CleanString(dto.Back);
+            existingCard.ImageURL = CleanString(dto.ImageURL);
+            existingCard.AdditionalMetadata = CleanString(dto.AdditionalMetadata);
+            existingCard.UpdatedAt = DateTime.UtcNow;
 
             if (dto.GenerateAiContext)
             {
-                var deckExists = await _deckRepository.GetByIdAsync(existingCard.DeckId);
-
-                if (deckExists == null) 
-                    throw new NotFoundException("Deck", existingCard.DeckId);
-
-                try
-                {
-                    var aiResult = await _aiContextService.GetAiContextAsync(
-                        word: dto.Front,
-                        learningLanguage: deckExists.TargetLanguage,
-                        nativeLanguage: deckExists.NativeLanguage,
-                        level: deckExists.ProficiencyLevel,
-                        deckContext: deckExists.Title,
-                        tone: deckExists.Tone
-                    );
-
-                    existingCard.GeneratedContext = aiResult.GeneratedContext;
-                    existingCard.ContextTranslation = aiResult.ContextTranslation;
-                    existingCard.ContextReading = aiResult.ContextReading;
-
-                    existingCard.IsSimplified = false;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to regenerate AI context for card '{Id}'", id);
-                    throw new InvalidOperationException("AI context generation failed during update.", ex);
-                }
+                var deck = await GetDeckOrThrowAsync(existingCard.DeckId);
+                await ProcessAiGenerationAsync(existingCard, deck, generateSentence: true);
+                existingCard.IsSimplified = false; 
             }
             else
             {
-                existingCard.GeneratedContext = dto.GeneratedContext;
-                existingCard.ContextTranslation = dto.ContextTranslation;
-                existingCard.ContextReading = dto.ContextReading;
+                existingCard.GeneratedContext = CleanString(dto.GeneratedContext);
+                existingCard.ContextTranslation = CleanString(dto.ContextTranslation);
+                existingCard.ContextReading = CleanString(dto.ContextReading);
             }
 
-            existingCard.Front = dto.Front;
-            existingCard.Back = dto.Back;
-            existingCard.ImageURL = dto.ImageURL;
-            existingCard.AdditionalMetadata = dto.AdditionalMetadata;
-            existingCard.UpdatedAt = DateTime.UtcNow;
-
             await _cardRepository.UpdateAsync(existingCard);
-
             return MapToCardDto(existingCard);
         }
 
         public async Task DeleteCardAsync(Guid id)
         {
-            var existingCard = await _cardRepository.GetByIdAsync(id);
-
-            if (existingCard == null)
-            {
-                throw new NotFoundException("Card", id);
-            }
-
-            await _cardRepository.DeleteAsync(existingCard);
+            var card = await GetCardOrThrowAsync(id);
+            await _cardRepository.DeleteAsync(card);
         }
 
         public async Task<CardDto> SimplifyCardAsync(Guid id)
         {
-            var existingCard = await _cardRepository.GetByIdAsync(id);
-            
-            if (existingCard == null)
-                throw new NotFoundException("Card", id);
+            var card = await GetCardOrThrowAsync(id);
 
-            if (existingCard.IsSimplified)
-                throw new Domain.Exceptions.ValidationException("Це речення вже було спрощено. Якщо воно вам не підходить, створіть нову картку або відредагуйте текст вручну.");
+            if (card.IsSimplified)
+                throw new Domain.Exceptions.ValidationException("This sentence has already been simplified. If it doesn't suit you, create a new card or edit the text manually.");
 
-
-            if (string.IsNullOrWhiteSpace(existingCard.GeneratedContext))
+            if (string.IsNullOrWhiteSpace(card.GeneratedContext))
                 throw new Domain.Exceptions.ValidationException("Card does not have generated context to simplify.");
 
-            var deckExists = await _deckRepository.GetByIdAsync(existingCard.DeckId);
-
-            if (deckExists == null)
-                throw new NotFoundException("Deck", existingCard.DeckId);
-
-            var simplerLevel = GetSimplerLevel(deckExists.ProficiencyLevel);
+            var deck = await GetDeckOrThrowAsync(card.DeckId);
+            var simplerLevel = GetSimplerLevel(deck.ProficiencyLevel);
 
             var simplifiedResult = await _aiContextService.SimplifyContextAsync(
-                existingCard.Front,
-                existingCard.GeneratedContext,
-                deckExists.TargetLanguage,
-                deckExists.NativeLanguage,
-                simplerLevel
-            );
+                card.Front, card.GeneratedContext, deck.TargetLanguage, deck.NativeLanguage, simplerLevel);
 
-            existingCard.GeneratedContext = simplifiedResult.GeneratedContext;
-            existingCard.ContextTranslation = simplifiedResult.ContextTranslation;
-            existingCard.ContextReading = simplifiedResult.ContextReading;
+            card.GeneratedContext = simplifiedResult.GeneratedContext;
+            card.ContextTranslation = simplifiedResult.ContextTranslation;
+            card.ContextReading = simplifiedResult.ContextReading;
+            card.IsSimplified = true;
+            card.UpdatedAt = DateTime.UtcNow;
 
-            existingCard.IsSimplified = true;
-            existingCard.UpdatedAt = DateTime.UtcNow;
+            await _cardRepository.UpdateAsync(card);
+            return MapToCardDto(card);
+        }
 
-            await _cardRepository.UpdateAsync(existingCard);
+        private async Task ProcessAiGenerationAsync(Card card, Deck deck, bool generateSentence)
+        {
+            bool needsTranslation = string.IsNullOrWhiteSpace(card.Back);
 
-            return MapToCardDto(existingCard);
+            if (generateSentence)
+            {
+                try
+                {
+                    var aiResult = await _aiContextService.GetAiContextAsync(
+                        word: card.Front,
+                        learningLanguage: deck.TargetLanguage,
+                        nativeLanguage: deck.NativeLanguage,
+                        level: deck.ProficiencyLevel,
+                        deckContext: deck.Title,
+                        tone: deck.Tone
+                    );
+
+                    card.GeneratedContext = aiResult.GeneratedContext;
+                    card.ContextTranslation = aiResult.ContextTranslation;
+                    card.ContextReading = aiResult.ContextReading;
+
+                    if (!string.IsNullOrWhiteSpace(aiResult.CorrectedWord))
+                        card.Front = aiResult.CorrectedWord;
+
+                    if (needsTranslation)
+                        card.Back = aiResult.WordTranslation;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to generate full AI context for word '{Word}'", card.Front);
+                    throw new AiTranslationException("AI context generation failed.", ex);
+                }
+            }
+            else if (needsTranslation)
+            {
+                try
+                {
+                    card.Back = await _aiContextService.TranslateWordAsync(
+                        word: card.Front,
+                        learningLanguage: deck.TargetLanguage,
+                        nativeLanguage: deck.NativeLanguage
+                    );
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to perform fast translation for word '{Word}'", card.Front);
+                    throw new InvalidOperationException("Fast translation failed. Please enter manually.", ex);
+                }
+            }
+        }
+
+        private async Task<Deck> GetDeckOrThrowAsync(Guid deckId)
+        {
+            return await _deckRepository.GetByIdAsync(deckId)
+                ?? throw new NotFoundException("Deck", deckId);
+        }
+
+        private async Task<Card> GetCardOrThrowAsync(Guid cardId)
+        {
+            return await _cardRepository.GetByIdAsync(cardId)
+                ?? throw new NotFoundException("Card", cardId);
+        }
+
+        private async Task ValidateAsync<T>(IValidator<T> validator, T dto, string errorMessagePrefix)
+        {
+            var result = await validator.ValidateAsync(dto);
+            if (!result.IsValid)
+            {
+                var errors = string.Join("; ", result.Errors.Select(e => e.ErrorMessage));
+                throw new Domain.Exceptions.ValidationException($"{errorMessagePrefix}: {errors}");
+            }
+        }
+
+        private static string CleanString(string? input)
+        {
+            return (input == "string" || string.IsNullOrWhiteSpace(input)) ? string.Empty : input.Trim();
         }
 
         private static CardDto MapToCardDto(Card card)
@@ -275,7 +230,7 @@ namespace LexiContext.Application.Services
             };
         }
 
-        private ProficiencyLevel GetSimplerLevel(ProficiencyLevel currentLevel)
+        private static ProficiencyLevel GetSimplerLevel(ProficiencyLevel currentLevel)
         {
             return currentLevel switch
             {

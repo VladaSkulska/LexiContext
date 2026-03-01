@@ -1,6 +1,4 @@
-﻿using LexiContext.Application.Models;
-using LexiContext.Application.Services;
-using LexiContext.Application.Services.Interfaces;
+﻿using LexiContext.Application.Services;
 using LexiContext.Domain.Enums;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
