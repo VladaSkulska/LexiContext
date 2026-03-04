@@ -4,10 +4,10 @@ namespace LexiContext.Application.Services.Interfaces
 {
     public interface IDeckService
     {
-        public Task<DeckDto> CreateDeckAsync(CreateDeckDto dto);
-        public Task<DeckDto> GetDeckByIdAsync(Guid id);
-        public Task<List<DeckDto>> GetAllDecksAsync();
-        public Task<DeckDto> UpdateDeckAsync(Guid id, UpdateDeckDto dto);
-        public Task DeleteDeckAsync(Guid id);
+        Task<DeckDto> CreateDeckAsync(CreateDeckDto dto, Guid userId);
+        Task<DeckDto> GetDeckByIdAsync(Guid id, Guid userId);
+        Task<List<DeckDto>> GetAllDecksAsync(Guid userId);
+        Task<DeckDto> UpdateDeckAsync(Guid id, UpdateDeckDto dto, Guid userId);
+        Task DeleteDeckAsync(Guid id, Guid userId);
     }
 }

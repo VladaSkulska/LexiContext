@@ -3,6 +3,7 @@ using System;
 using LexiContext.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LexiContext.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260302132214_SeedInitialUser")]
+    partial class SeedInitialUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -130,10 +133,6 @@ namespace LexiContext.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("AuthProvider")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -144,12 +143,12 @@ namespace LexiContext.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("ExternalProviderId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<DateTime?>("LastStudyDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -166,12 +165,11 @@ namespace LexiContext.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000001"),
-                            AuthProvider = "System",
-                            CreatedAt = new DateTime(2026, 3, 3, 9, 25, 41, 579, DateTimeKind.Utc).AddTicks(9868),
+                            CreatedAt = new DateTime(2026, 3, 2, 13, 22, 13, 167, DateTimeKind.Utc).AddTicks(6051),
                             CurrentStreak = 0,
                             Email = "student@fpm.kpi.ua",
-                            ExternalProviderId = "sys-001",
-                            UpdatedAt = new DateTime(2026, 3, 3, 9, 25, 41, 579, DateTimeKind.Utc).AddTicks(9870),
+                            PasswordHash = "dummy_hash",
+                            UpdatedAt = new DateTime(2026, 3, 2, 13, 22, 13, 167, DateTimeKind.Utc).AddTicks(6053),
                             Username = "DevStudent_KPI"
                         });
                 });

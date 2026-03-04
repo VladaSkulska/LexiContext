@@ -66,7 +66,7 @@ namespace LexiContext.Tests.Services
                 Domain.Enums.RecallQuality.Easy);
 
             // Assert
-            Assert.Equal(result.IntervalDays, 3650);
+            Assert.Equal(3650, result.IntervalDays);
         }
 
         [Fact]
@@ -103,7 +103,7 @@ namespace LexiContext.Tests.Services
 
             // Assert
             Assert.Equal(currentRepetitions + 1, result.Repetitions);
-            Assert.Equal((int)(currentIntervalDays * result.EaseFactor), result.IntervalDays);
+            Assert.Equal((int)Math.Round(currentIntervalDays * result.EaseFactor), result.IntervalDays);
         }
     }
 }

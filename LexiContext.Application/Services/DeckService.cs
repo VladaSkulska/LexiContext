@@ -1,37 +1,32 @@
-﻿using ValidationException = LexiContext.Domain.Exceptions.ValidationException;
+﻿using LexiContext.Application.Common.Extensions;
 using LexiContext.Application.DTOs.Decks;
-using LexiContext.Application.Interfaces;
 using LexiContext.Application.Services.Interfaces;
 using LexiContext.Domain.Entities;
 using LexiContext.Domain.Exceptions;
 using FluentValidation;
+using LexiContext.Application.Interfaces.Repos;
 
 namespace LexiContext.Application.Services
 {
     public class DeckService : IDeckService
     {
         private readonly IDeckRepository _deckRepository;
-
         private readonly IValidator<CreateDeckDto> _createDeckValidator;
         private readonly IValidator<UpdateDeckDto> _updateDeckValidator;
 
-        public DeckService(IDeckRepository deckRepository, 
-            IValidator<CreateDeckDto> createValidator, 
+        public DeckService(
+            IDeckRepository deckRepository,
+            IValidator<CreateDeckDto> createValidator,
             IValidator<UpdateDeckDto> updateDeckValidator)
         {
             _deckRepository = deckRepository;
-            _updateDeckValidator = updateDeckValidator;
             _createDeckValidator = createValidator;
+            _updateDeckValidator = updateDeckValidator;
         }
-        public async Task<DeckDto> CreateDeckAsync(CreateDeckDto dto)
-        {
-            var validationResult = await _createDeckValidator.ValidateAsync(dto);
 
-            if(!validationResult.IsValid)
-            {
-                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
-                throw new ValidationException(errors);
-            }
+        public async Task<DeckDto> CreateDeckAsync(CreateDeckDto dto, Guid userId)
+        {
+            await _createDeckValidator.ValidateAndThrowCustomAsync(dto);
 
             Deck deckEntity = new Deck
             {
@@ -41,80 +36,34 @@ namespace LexiContext.Application.Services
                 TargetLanguage = dto.TargetLanguage,
                 NativeLanguage = dto.NativeLanguage,
                 ProficiencyLevel = dto.ProficiencyLevel,
-                Tone = dto.Tone
+                Tone = dto.Tone,
+                CreatedId = userId
             };
 
             var createdId = await _deckRepository.CreateAsync(deckEntity);
-
             deckEntity.Id = createdId;
 
-            return new DeckDto
-            {
-                Id = deckEntity.Id,
-                Title = deckEntity.Title,
-                Description = deckEntity.Description ?? string.Empty,
-                IsPublic = deckEntity.IsPublic,
-                CreatedAt = deckEntity.CreatedAt,
-                TargetLanguage = deckEntity.TargetLanguage,
-                NativeLanguage = deckEntity.NativeLanguage,
-                ProficiencyLevel = deckEntity.ProficiencyLevel,
-                Tone = deckEntity.Tone
-            };
+            return MapToDeckDto(deckEntity);
         }
 
-        public async Task<DeckDto> GetDeckByIdAsync(Guid id)
+        public async Task<DeckDto> GetDeckByIdAsync(Guid id, Guid userId)
         {
-            var deckEntity = await _deckRepository.GetByIdAsync(id);
-
-            if (deckEntity == null)
-                throw new NotFoundException("Deck", id);
-
-            return new DeckDto
-            {
-                Id = deckEntity.Id,
-                Title = deckEntity.Title,
-                Description = deckEntity.Description,
-                IsPublic = deckEntity.IsPublic,
-                CreatedAt = deckEntity.CreatedAt,
-                TargetLanguage = deckEntity.TargetLanguage,
-                NativeLanguage = deckEntity.NativeLanguage,
-                ProficiencyLevel = deckEntity.ProficiencyLevel,
-                Tone = deckEntity.Tone
-            };
+            var deckEntity = await GetDeckOrThrowAsync(id, userId);
+            return MapToDeckDto(deckEntity);
         }
 
-        public async Task<List<DeckDto>> GetAllDecksAsync()
+        public async Task<List<DeckDto>> GetAllDecksAsync(Guid userId)
         {
-            var deckEntities = await _deckRepository.GetAllAsync();
+            var deckEntities = await _deckRepository.GetAllByUserIdAsync(userId);
 
-            return deckEntities.Select(deckEntity => new DeckDto
-            {
-                Id = deckEntity.Id,
-                Title = deckEntity.Title,
-                Description = deckEntity.Description,
-                IsPublic = deckEntity.IsPublic,
-                CreatedAt = deckEntity.CreatedAt,
-                TargetLanguage = deckEntity.TargetLanguage,
-                NativeLanguage = deckEntity.NativeLanguage,
-                ProficiencyLevel = deckEntity.ProficiencyLevel,
-                Tone = deckEntity.Tone
-            }).ToList();
+            return deckEntities.Select(MapToDeckDto).ToList();
         }
 
-        public async Task<DeckDto> UpdateDeckAsync(Guid id, UpdateDeckDto dto)
+        public async Task<DeckDto> UpdateDeckAsync(Guid id, UpdateDeckDto dto, Guid userId)
         {
-            var validationResult = await _updateDeckValidator.ValidateAsync(dto);
+            await _updateDeckValidator.ValidateAndThrowCustomAsync(dto);
 
-            if(!validationResult.IsValid)
-            {
-                var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
-                throw new ValidationException(errors);
-            }
-
-            var entity = await _deckRepository.GetByIdAsync(id);
-
-            if (entity == null)
-                throw new NotFoundException("Deck", id);
+            var entity = await GetDeckOrThrowAsync(id, userId);
 
             entity.Title = dto.Title;
             entity.Description = dto.Description ?? string.Empty;
@@ -122,26 +71,40 @@ namespace LexiContext.Application.Services
 
             await _deckRepository.UpdateAsync(entity);
 
-            return new DeckDto
-            {
-                Id = entity.Id,
-                Title = entity.Title,
-                Description = entity.Description,
-                IsPublic = entity.IsPublic,
-                CreatedAt = entity.CreatedAt,
-                TargetLanguage = entity.TargetLanguage,
-                NativeLanguage = entity.NativeLanguage,
-                ProficiencyLevel = entity.ProficiencyLevel,
-                Tone = entity.Tone
-            };
+            return MapToDeckDto(entity);
         }
 
-        public async Task DeleteDeckAsync(Guid id)
+        public async Task DeleteDeckAsync(Guid id, Guid userId)
         {
-            var entity =  await _deckRepository.GetByIdAsync(id);
-            if (entity == null) 
-                throw new NotFoundException("Deck", id);
+            var entity = await GetDeckOrThrowAsync(id, userId);
             await _deckRepository.DeleteAsync(entity);
+        }
+        private async Task<Deck> GetDeckOrThrowAsync(Guid id, Guid userId)
+        {
+            var deckEntity = await _deckRepository.GetByIdAsync(id);
+            if (deckEntity == null)
+                throw new NotFoundException("Deck", id);
+
+            if (deckEntity.CreatedId != userId)
+                throw new UnauthorizedAccessException("Ви не маєте доступу до цієї колоди.");
+
+            return deckEntity;
+        }
+
+        private static DeckDto MapToDeckDto(Deck deck)
+        {
+            return new DeckDto
+            {
+                Id = deck.Id,
+                Title = deck.Title,
+                Description = deck.Description ?? string.Empty,
+                IsPublic = deck.IsPublic,
+                CreatedAt = deck.CreatedAt,
+                TargetLanguage = deck.TargetLanguage,
+                NativeLanguage = deck.NativeLanguage,
+                ProficiencyLevel = deck.ProficiencyLevel,
+                Tone = deck.Tone
+            };
         }
     }
 }

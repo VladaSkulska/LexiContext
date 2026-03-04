@@ -4,11 +4,9 @@ namespace LexiContext.Domain.Entities
 {
     public class UserCardProgress : BaseEntity
     {
-        // who studies?
         public Guid UserId { get; set; }
         public User? User { get; set; }
 
-        // which card?
         public Guid CardId { get; set; }
         public Card? Card { get; set; }
 

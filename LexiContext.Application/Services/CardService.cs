@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
+using LexiContext.Application.Common.Extensions;
 using LexiContext.Application.DTOs.Cards;
-using LexiContext.Application.Interfaces;
+using LexiContext.Application.Interfaces.Repos;
 using LexiContext.Application.Services.Interfaces;
 using LexiContext.Domain.Entities;
 using LexiContext.Domain.Enums;
@@ -33,11 +34,10 @@ namespace LexiContext.Application.Services
             _logger = logger;
         }
 
-        public async Task<CardDto> CreateCardAsync(CreateCardDto dto)
+        public async Task<CardDto> CreateCardAsync(CreateCardDto dto, Guid userId)
         {
-            await ValidateAsync(_createCardValidator, dto, "Card creation failed");
-
-            var deck = await GetDeckOrThrowAsync(dto.DeckId);
+            await _createCardValidator.ValidateAndThrowCustomAsync(dto);
+            var deck = await GetDeckOrThrowAsync(dto.DeckId, userId);
 
             var card = new Card
             {
@@ -60,23 +60,24 @@ namespace LexiContext.Application.Services
             return MapToCardDto(card);
         }
 
-        public async Task<CardDto> GetCardByIdAsync(Guid id)
+        public async Task<CardDto> GetCardByIdAsync(Guid id, Guid userId)
         {
-            var card = await GetCardOrThrowAsync(id);
+            var card = await GetCardOrThrowAsync(id, userId);
             return MapToCardDto(card);
         }
 
-        public async Task<List<CardDto>> GetCardsByDeckIdAsync(Guid deckId)
+        public async Task<List<CardDto>> GetCardsByDeckIdAsync(Guid deckId, Guid userId)
         {
+            await GetDeckOrThrowAsync(deckId, userId);
+
             var cards = await _cardRepository.GetByDeckIdAsync(deckId);
             return cards.Select(MapToCardDto).ToList();
         }
 
-        public async Task<CardDto> UpdateCardAsync(Guid id, UpdateCardDto dto)
+        public async Task<CardDto> UpdateCardAsync(Guid id, UpdateCardDto dto, Guid userId)
         {
-            await ValidateAsync(_updateCardValidator, dto, "Card update failed");
-
-            var existingCard = await GetCardOrThrowAsync(id);
+            await _updateCardValidator.ValidateAndThrowCustomAsync(dto);
+            var existingCard = await GetCardOrThrowAsync(id, userId);
 
             existingCard.Front = CleanString(dto.Front);
             existingCard.Back = CleanString(dto.Back);
@@ -86,9 +87,9 @@ namespace LexiContext.Application.Services
 
             if (dto.GenerateAiContext)
             {
-                var deck = await GetDeckOrThrowAsync(existingCard.DeckId);
+                var deck = await GetDeckOrThrowAsync(existingCard.DeckId, userId);
                 await ProcessAiGenerationAsync(existingCard, deck, generateSentence: true);
-                existingCard.IsSimplified = false; 
+                existingCard.IsSimplified = false;
             }
             else
             {
@@ -101,15 +102,15 @@ namespace LexiContext.Application.Services
             return MapToCardDto(existingCard);
         }
 
-        public async Task DeleteCardAsync(Guid id)
+        public async Task DeleteCardAsync(Guid id, Guid userId)
         {
-            var card = await GetCardOrThrowAsync(id);
+            var card = await GetCardOrThrowAsync(id, userId);
             await _cardRepository.DeleteAsync(card);
         }
 
-        public async Task<CardDto> SimplifyCardAsync(Guid id)
+        public async Task<CardDto> SimplifyCardAsync(Guid id, Guid userId)
         {
-            var card = await GetCardOrThrowAsync(id);
+            var card = await GetCardOrThrowAsync(id, userId);
 
             if (card.IsSimplified)
                 throw new Domain.Exceptions.ValidationException("This sentence has already been simplified. If it doesn't suit you, create a new card or edit the text manually.");
@@ -117,7 +118,7 @@ namespace LexiContext.Application.Services
             if (string.IsNullOrWhiteSpace(card.GeneratedContext))
                 throw new Domain.Exceptions.ValidationException("Card does not have generated context to simplify.");
 
-            var deck = await GetDeckOrThrowAsync(card.DeckId);
+            var deck = await GetDeckOrThrowAsync(card.DeckId, userId); // 👈
             var simplerLevel = GetSimplerLevel(deck.ProficiencyLevel);
 
             var simplifiedResult = await _aiContextService.SimplifyContextAsync(
@@ -184,26 +185,25 @@ namespace LexiContext.Application.Services
             }
         }
 
-        private async Task<Deck> GetDeckOrThrowAsync(Guid deckId)
+        private async Task<Deck> GetDeckOrThrowAsync(Guid deckId, Guid userId)
         {
-            return await _deckRepository.GetByIdAsync(deckId)
+            var deck = await _deckRepository.GetByIdAsync(deckId)
                 ?? throw new NotFoundException("Deck", deckId);
+
+            if (deck.CreatedId != userId)
+                throw new UnauthorizedAccessException("Ви не маєте доступу до цієї колоди.");
+
+            return deck;
         }
 
-        private async Task<Card> GetCardOrThrowAsync(Guid cardId)
+        private async Task<Card> GetCardOrThrowAsync(Guid cardId, Guid userId)
         {
-            return await _cardRepository.GetByIdAsync(cardId)
+            var card = await _cardRepository.GetByIdAsync(cardId)
                 ?? throw new NotFoundException("Card", cardId);
-        }
 
-        private async Task ValidateAsync<T>(IValidator<T> validator, T dto, string errorMessagePrefix)
-        {
-            var result = await validator.ValidateAsync(dto);
-            if (!result.IsValid)
-            {
-                var errors = string.Join("; ", result.Errors.Select(e => e.ErrorMessage));
-                throw new Domain.Exceptions.ValidationException($"{errorMessagePrefix}: {errors}");
-            }
+            await GetDeckOrThrowAsync(card.DeckId, userId);
+
+            return card;
         }
 
         private static string CleanString(string? input)

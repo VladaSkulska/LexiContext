@@ -1,6 +1,6 @@
 ﻿using LexiContext.Domain.Entities;
 
-namespace LexiContext.Application.Interfaces
+namespace LexiContext.Application.Interfaces.Repos
 {
     public interface ICardRepository
     {

@@ -1,23 +1,23 @@
 ﻿using LexiContext.Domain.Entities;
-using LexiContext.Application.Interfaces;
 using LexiContext.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using LexiContext.Application.Interfaces.Repos;
 
 namespace LexiContext.Infrastructure.Repositories
 {
     public class DeckRepository : IDeckRepository
     {
         private readonly AppDbContext _context;
+
         public DeckRepository(AppDbContext context)
         {
             _context = context;
         }
+
         public async Task<Guid> CreateAsync(Deck deck)
         {
             await _context.Decks.AddAsync(deck);
-
             await _context.SaveChangesAsync();
-
             return deck.Id;
         }
 
@@ -30,18 +30,23 @@ namespace LexiContext.Infrastructure.Repositories
         {
             return await _context.Decks.AsNoTracking().ToListAsync();
         }
+        public async Task<List<Deck>> GetAllByUserIdAsync(Guid userId)
+        {
+            return await _context.Decks
+                .AsNoTracking()
+                .Where(d => d.CreatedId == userId)
+                .ToListAsync();
+        }
 
         public async Task UpdateAsync(Deck deck)
         {
             _context.Decks.Update(deck);
-
             await _context.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(Deck deck)
         {
             _context.Decks.Remove(deck);
-
             await _context.SaveChangesAsync();
         }
     }

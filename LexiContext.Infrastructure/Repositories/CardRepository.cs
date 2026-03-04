@@ -1,4 +1,4 @@
-﻿using LexiContext.Application.Interfaces;
+﻿using LexiContext.Application.Interfaces.Repos;
 using LexiContext.Domain.Entities;
 using LexiContext.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;

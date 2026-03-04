@@ -6,12 +6,15 @@ namespace LexiContext.Domain.Entities
     {
         public string Username { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
-        public string PasswordHash {  get; set; } = string.Empty;
+
+        // OAuth
+        public string AuthProvider { get; set; } = string.Empty;
+        public string ExternalProviderId { get; set; } = string.Empty;
 
         // gamification
-        public int CurrentStreak { get; set; } 
-        public DateTime? LastStudyDate {  get; set; }
-        
+        public int CurrentStreak { get; set; }
+        public DateTime? LastStudyDate { get; set; }
+
         // connections
         // settings 1 to 1
         public UserSettings? Settings { get; set; }

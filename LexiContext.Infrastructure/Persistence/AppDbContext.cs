@@ -9,11 +9,28 @@ namespace LexiContext.Infrastructure.Persistence
         {
 
         }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
 
-        public DbSet<User> Users { get; set; }
-        public DbSet<Deck> Decks { get; set; }
-        public DbSet<Card> Cards { get; set; }
-        public DbSet<UserSettings> UserSettings { get; set; }
-        public DbSet<UserCardProgress> UserCardProgresses { get; set; }
+            var testUserId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+
+            modelBuilder.Entity<User>().HasData(new User
+            {
+                Id = testUserId,
+                Username = "DevStudent_KPI",
+                Email = "student@fpm.kpi.ua",
+                AuthProvider = "System",
+                ExternalProviderId = "sys-001",
+                CurrentStreak = 0,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            });
+        }
+        public DbSet<User> Users => Set<User>();
+        public DbSet<Deck> Decks => Set<Deck>();
+        public DbSet<Card> Cards => Set<Card>();
+        public DbSet<UserSettings> UserSettings => Set<UserSettings>();
+        public DbSet<UserCardProgress> UserCardProgresses => Set<UserCardProgress>();
     }
 }

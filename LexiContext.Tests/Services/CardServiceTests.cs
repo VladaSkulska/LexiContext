@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
 using FluentValidation.Results;
 using LexiContext.Application.DTOs.Cards;
-using LexiContext.Application.Interfaces;
+using LexiContext.Application.Interfaces.Repos;
 using LexiContext.Application.Models;
 using LexiContext.Application.Services;
 using LexiContext.Application.Services.Interfaces;
@@ -67,7 +67,7 @@ namespace LexiContext.Tests.Services
                 () => _cardService.SimplifyCardAsync(cardId)
             );
 
-            Assert.Contains("Це речення вже було спрощено", exception.Message);
+            Assert.Contains("This sentence has already been simplified", exception.Message);
         }
 
         [Fact]
@@ -98,7 +98,8 @@ namespace LexiContext.Tests.Services
                 "A simple bug.",
                 "Простий баг.",
                 "",
-                "баг"
+                "баг",
+                ""
             );
 
             _cardRepoMock.Setup(repo => repo.GetByIdAsync(cardId)).ReturnsAsync(existingCard);
@@ -142,7 +143,8 @@ namespace LexiContext.Tests.Services
                 "New complex context",
                 "Новий контекст",
                 "",
-                "Нове слово"
+                "Нове слово",
+                ""
             );
 
             _cardRepoMock.Setup(repo => repo.GetByIdAsync(cardId)).ReturnsAsync(existingCard);
@@ -156,6 +158,44 @@ namespace LexiContext.Tests.Services
             // Assert
             Assert.False(result.IsSimplified);
             _cardRepoMock.Verify(repo => repo.UpdateAsync(It.Is<Card>(c => c.IsSimplified == false)), Times.Once);
+        }
+
+        [Fact]
+        public async Task CreateCardAsync_ShouldThrowValidationException_WhenDataIsInvalid()
+        {
+            // ARRANGE: 
+            var invalidDto = new CreateCardDto
+            {
+                Front = "", 
+                DeckId = Guid.NewGuid()
+            };
+
+            _createValidatorMock
+                .Setup(v => v.ValidateAsync(invalidDto, default))
+                .ThrowsAsync(new LexiContext.Domain.Exceptions.ValidationException("Front is required"));
+
+            // ACT & ASSERT: 
+            await Assert.ThrowsAsync<LexiContext.Domain.Exceptions.ValidationException>(() =>
+                _cardService.CreateCardAsync(invalidDto));
+
+            _cardRepoMock.Verify(r => r.CreateAsync(It.IsAny<Card>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task UpdateCardAsync_ShouldThrowValidationException_WhenDataIsInvalid()
+        {
+            // ARRANGE: 
+            var invalidDto = new UpdateCardDto { Front = "" };
+
+            _updateValidatorMock
+                .Setup(v => v.ValidateAsync(invalidDto, default))
+                .ThrowsAsync(new LexiContext.Domain.Exceptions.ValidationException("Front is required"));
+
+            // ACT & ASSERT
+            await Assert.ThrowsAsync<LexiContext.Domain.Exceptions.ValidationException>(() =>
+                _cardService.UpdateCardAsync(Guid.NewGuid(), invalidDto));
+
+            _cardRepoMock.Verify(r => r.UpdateAsync(It.IsAny<Card>()), Times.Never);
         }
     }
 }
