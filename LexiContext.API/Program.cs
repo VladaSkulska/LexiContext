@@ -87,6 +87,10 @@ builder.Services.AddScoped<IDeckRepository, DeckRepository>();
 builder.Services.AddScoped<IDeckService, DeckService>();
 builder.Services.AddScoped<ICardRepository, CardRepository>();
 builder.Services.AddScoped<ICardService, CardService>();
+
+builder.Services.AddScoped<IStoryRepository, StoryRepository>();
+builder.Services.AddScoped<IStoryService, StoryService>();
+
 builder.Services.AddScoped<ISpacedRepetitionService, SpacedRepetitionService>();
 builder.Services.AddScoped<IStudyService, StudyService>();
 builder.Services.AddScoped<IUserCardProgressRepository, UserCardProgressRepository>();

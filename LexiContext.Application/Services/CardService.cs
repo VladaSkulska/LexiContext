@@ -171,11 +171,23 @@ namespace LexiContext.Application.Services
             {
                 try
                 {
-                    card.Back = await _aiContextService.TranslateWordAsync(
+                    var rawTranslationResult = await _aiContextService.TranslateWordAsync(
                         word: card.Front,
                         learningLanguage: deck.TargetLanguage,
                         nativeLanguage: deck.NativeLanguage
                     );
+
+                    var parts = rawTranslationResult.Split(new[] { " - " }, 2, StringSplitOptions.TrimEntries);
+
+                    if (parts.Length == 2)
+                    {
+                        card.Front = parts[0]; 
+                        card.Back = parts[1];
+                    }
+                    else
+                    {
+                        card.Back = rawTranslationResult;
+                    }
                 }
                 catch (Exception ex)
                 {

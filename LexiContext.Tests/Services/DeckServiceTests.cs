@@ -12,11 +12,11 @@ namespace LexiContext.Tests.Services
     public class DeckServiceTests
     {
         private readonly Mock<IDeckRepository> _deckRepositoryMock;
-
         private readonly Mock<IValidator<CreateDeckDto>> _createDeckValidatorMock;
         private readonly Mock<IValidator<UpdateDeckDto>> _updateDeckValidatorMock;
-
         private readonly IDeckService _deckService;
+
+        private readonly Guid _testUserId = Guid.NewGuid();
 
         public DeckServiceTests()
         {
@@ -33,7 +33,6 @@ namespace LexiContext.Tests.Services
         [Fact]
         public async Task CreateDeckAsync_ShouldReturnDto_WhenDataIsValid()
         {
-            // ARRANGE
             var dto = new CreateDeckDto
             {
                 Title = "Sample Deck",
@@ -43,7 +42,6 @@ namespace LexiContext.Tests.Services
                 NativeLanguage = Domain.Enums.LearningLanguage.English
             };
 
-            // Для позитивного тесту просто повертаємо успішний результат
             _createDeckValidatorMock
                 .Setup(v => v.ValidateAsync(dto, default))
                 .ReturnsAsync(new FluentValidation.Results.ValidationResult());
@@ -54,10 +52,8 @@ namespace LexiContext.Tests.Services
                 .Setup(r => r.CreateAsync(It.IsAny<Deck>()))
                 .ReturnsAsync(id);
 
-            // ACT
-            var result = await _deckService.CreateDeckAsync(dto);
+            var result = await _deckService.CreateDeckAsync(dto, _testUserId);
 
-            // ASSERT
             Assert.NotNull(result);
             Assert.Equal(id, result.Id);
             Assert.Equal(dto.Title, result.Title);
@@ -66,7 +62,6 @@ namespace LexiContext.Tests.Services
         [Fact]
         public async Task CreateDeckAsync_ShouldThrowException_WhenDataIsInvalid()
         {
-            // ARRANGE
             var invalidDto = new CreateDeckDto
             {
                 Title = "",
@@ -74,13 +69,12 @@ namespace LexiContext.Tests.Services
                 NativeLanguage = Domain.Enums.LearningLanguage.English
             };
 
-            // Оскільки ми використовуємо Extension Method, ми імітуємо, що він одразу кидає виняток
             _createDeckValidatorMock
                 .Setup(v => v.ValidateAsync(invalidDto, default))
-                .ThrowsAsync(new LexiContext.Domain.Exceptions.ValidationException("Title is required"));
+                .ThrowsAsync(new Domain.Exceptions.ValidationException("Title is required"));
 
-            // ACT & ASSERT
-            await Assert.ThrowsAsync<LexiContext.Domain.Exceptions.ValidationException>(() => _deckService.CreateDeckAsync(invalidDto));
+            await Assert.ThrowsAsync<Domain.Exceptions.ValidationException>(() =>
+                _deckService.CreateDeckAsync(invalidDto, _testUserId));
 
             _deckRepositoryMock.Verify(r => r.CreateAsync(It.IsAny<Deck>()), Times.Never);
         }
@@ -88,18 +82,15 @@ namespace LexiContext.Tests.Services
         [Fact]
         public async Task GetDeckByIdAsync_ShouldReturnDto_WhenDeckExists()
         {
-            // ARRANGE
             var deckId = Guid.NewGuid();
-            var existingDeck = new Deck { Id = deckId, Title = "Existing Deck" };
+            var existingDeck = new Deck { Id = deckId, Title = "Existing Deck", CreatedId = _testUserId };
 
             _deckRepositoryMock
                 .Setup(r => r.GetByIdAsync(deckId))
                 .ReturnsAsync(existingDeck);
 
-            // ACT
-            var result = await _deckService.GetDeckByIdAsync(deckId);
+            var result = await _deckService.GetDeckByIdAsync(deckId, _testUserId);
 
-            // ASSERT
             Assert.NotNull(result);
             Assert.Equal(deckId, result.Id);
         }
@@ -107,35 +98,31 @@ namespace LexiContext.Tests.Services
         [Fact]
         public async Task GetDeckByIdAsync_ShouldThrowNoFoundException_WhenDeckDoesNotExist()
         {
-            // ARRANGE
             var nonExistentId = Guid.NewGuid();
 
             _deckRepositoryMock
                 .Setup(r => r.GetByIdAsync(nonExistentId))
                 .ReturnsAsync((Deck?)null);
 
-            // ACT & ASSERT
-            await Assert.ThrowsAsync<NotFoundException>(() => _deckService.GetDeckByIdAsync(nonExistentId));
+            await Assert.ThrowsAsync<NotFoundException>(() =>
+                _deckService.GetDeckByIdAsync(nonExistentId, _testUserId));
         }
 
         [Fact]
         public async Task GetAllDecksAsync_ShouldReturnListDto_WhenDeckListIsNotEmpty()
         {
-            // ARRANGE
             var deckList = new List<Deck>
             {
-                new Deck { Id = Guid.NewGuid(), Title = "Deck 1" },
-                new Deck { Id = Guid.NewGuid(), Title = "Deck 2" }
+                new Deck { Id = Guid.NewGuid(), Title = "Deck 1", CreatedId = _testUserId },
+                new Deck { Id = Guid.NewGuid(), Title = "Deck 2", CreatedId = _testUserId }
             };
 
             _deckRepositoryMock
-                .Setup(r => r.GetAllAsync())
+                .Setup(r => r.GetAllByUserIdAsync(_testUserId))
                 .ReturnsAsync(deckList);
 
-            // ACT
-            var result = await _deckService.GetAllDecksAsync();
+            var result = await _deckService.GetAllDecksAsync(_testUserId);
 
-            // ASSERT
             Assert.NotNull(result);
             Assert.Equal(2, result.Count);
             Assert.Equal("Deck 1", result[0].Title);
@@ -144,17 +131,14 @@ namespace LexiContext.Tests.Services
         [Fact]
         public async Task GetAllDecksAsync_ShouldReturnEmptyListDto_WhenNoDecksExist()
         {
-            // ARRANGE
             var emptyDeckList = new List<Deck>();
 
             _deckRepositoryMock
-                .Setup(r => r.GetAllAsync())
+                .Setup(r => r.GetAllByUserIdAsync(_testUserId))
                 .ReturnsAsync(emptyDeckList);
 
-            // ACT
-            var result = await _deckService.GetAllDecksAsync();
+            var result = await _deckService.GetAllDecksAsync(_testUserId);
 
-            // ASSERT
             Assert.NotNull(result);
             Assert.Empty(result);
         }
@@ -162,7 +146,6 @@ namespace LexiContext.Tests.Services
         [Fact]
         public async Task UpdateDeckAsync_ShoudlReturnUpdatedDto_WhenDeckExistsAndDataIsValid()
         {
-            // ARRANGE
             var existingDeckId = Guid.NewGuid();
             var existingDeck = new Deck
             {
@@ -170,6 +153,7 @@ namespace LexiContext.Tests.Services
                 Title = "Old Title",
                 Description = "Old Description",
                 IsPublic = false,
+                CreatedId = _testUserId
             };
 
             var updateDto = new UpdateDeckDto
@@ -187,10 +171,8 @@ namespace LexiContext.Tests.Services
                 .Setup(r => r.GetByIdAsync(existingDeckId))
                 .ReturnsAsync(existingDeck);
 
-            // ACT
-            var result = await _deckService.UpdateDeckAsync(existingDeckId, updateDto);
+            var result = await _deckService.UpdateDeckAsync(existingDeckId, updateDto, _testUserId);
 
-            // ASSERT
             Assert.NotNull(result);
             Assert.Equal(existingDeckId, result.Id);
             Assert.Equal(updateDto.Title, result.Title);
@@ -201,7 +183,6 @@ namespace LexiContext.Tests.Services
         [Fact]
         public async Task UpdateDeckAsync_ShouldReturnNotFound_WhenDeckDoesNotExist()
         {
-            // ARRANGE
             var nonExistingId = Guid.NewGuid();
             var updateDto = new UpdateDeckDto { Title = "New Title" };
 
@@ -213,8 +194,8 @@ namespace LexiContext.Tests.Services
                 .Setup(r => r.GetByIdAsync(nonExistingId))
                 .ReturnsAsync((Deck?)null);
 
-            // ACT & ASSERT
-            await Assert.ThrowsAsync<NotFoundException>(() => _deckService.UpdateDeckAsync(nonExistingId, updateDto));
+            await Assert.ThrowsAsync<NotFoundException>(() =>
+                _deckService.UpdateDeckAsync(nonExistingId, updateDto, _testUserId));
 
             _deckRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<Deck>()), Times.Never);
         }
@@ -222,49 +203,42 @@ namespace LexiContext.Tests.Services
         [Fact]
         public async Task UpdateDeckAsync_ShouldThrowValidationException_WhenDataIsNotValid()
         {
-            // ARRANGE
             var invalidDto = new UpdateDeckDto { Title = "" };
 
-            // Імітуємо поведінку Extension Method
             _updateDeckValidatorMock
                 .Setup(v => v.ValidateAsync(invalidDto, default))
                 .ThrowsAsync(new LexiContext.Domain.Exceptions.ValidationException("Title is required"));
 
-            // ACT & ASSERT
             await Assert.ThrowsAsync<LexiContext.Domain.Exceptions.ValidationException>(() =>
-            _deckService.UpdateDeckAsync(Guid.NewGuid(), invalidDto));
+                _deckService.UpdateDeckAsync(Guid.NewGuid(), invalidDto, _testUserId));
         }
 
         [Fact]
         public async Task DeleteDeckAsync_ShouldDeleteEntity_WhenDeckExists()
         {
-            // ARRANGE
             var existingDeckId = Guid.NewGuid();
-            var existingDeck = new Deck { Id = existingDeckId, Title = "Deck to be deleted" };
+            var existingDeck = new Deck { Id = existingDeckId, Title = "Deck to be deleted", CreatedId = _testUserId };
 
             _deckRepositoryMock
                 .Setup(r => r.GetByIdAsync(existingDeckId))
                 .ReturnsAsync(existingDeck);
 
-            // ACT
-            await _deckService.DeleteDeckAsync(existingDeckId);
+            await _deckService.DeleteDeckAsync(existingDeckId, _testUserId);
 
-            // ASSERT
             _deckRepositoryMock.Verify(r => r.DeleteAsync(existingDeck), Times.Once);
         }
 
         [Fact]
         public async Task DeleteDeckAsync_ShouldThrowNotFoundException_WhenDeckDoesNotExist()
         {
-            // ARRANGE
             var nonExistingId = Guid.NewGuid();
 
             _deckRepositoryMock
                 .Setup(r => r.GetByIdAsync(nonExistingId))
                 .ReturnsAsync((Deck?)null);
 
-            // ACT & ASSERT
-            await Assert.ThrowsAsync<NotFoundException>(() => _deckService.DeleteDeckAsync(nonExistingId));
+            await Assert.ThrowsAsync<NotFoundException>(() =>
+                _deckService.DeleteDeckAsync(nonExistingId, _testUserId));
 
             _deckRepositoryMock.Verify(r => r.DeleteAsync(It.IsAny<Deck>()), Times.Never);
         }

@@ -9,5 +9,6 @@ namespace LexiContext.Application.Interfaces.Repos
         Task<List<Card>> GetByDeckIdAsync(Guid deckId);
         Task UpdateAsync(Card card);
         Task DeleteAsync(Card card);
+        Task<List<Card>> GetRandomCardsForStoryAsync(Guid deckId, int count);
     }
 }

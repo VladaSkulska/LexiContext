@@ -47,5 +47,14 @@ namespace LexiContext.Infrastructure.Repositories
 
             await _context.SaveChangesAsync();
         }
+
+        public async Task<List<Card>> GetRandomCardsForStoryAsync(Guid deckId, int limit)
+        {
+            return await _context.Cards
+                .Where(c => c.DeckId == deckId)
+                .OrderByDescending(c => c.CreatedAt)
+                .Take(limit)
+                .ToListAsync();
+        }
     }
 }

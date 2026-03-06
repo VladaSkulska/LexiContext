@@ -3,6 +3,7 @@ using FluentValidation.Results;
 using LexiContext.Application.DTOs.Cards;
 using LexiContext.Application.Interfaces.Repos;
 using LexiContext.Application.Models;
+using LexiContext.Application.Models.Ai;
 using LexiContext.Application.Services;
 using LexiContext.Application.Services.Interfaces;
 using LexiContext.Domain.Entities;
@@ -23,6 +24,8 @@ namespace LexiContext.Tests.Services
         private readonly Mock<IValidator<UpdateCardDto>> _updateValidatorMock;
         private readonly Mock<ILogger<CardService>> _loggerMock;
         private readonly CardService _cardService;
+
+        private readonly Guid _testUserId = Guid.NewGuid();
 
         public CardServiceTests()
         {
@@ -51,20 +54,24 @@ namespace LexiContext.Tests.Services
         [Fact]
         public async Task SimplifyCardAsync_WhenCardAlreadySimplified_ThrowsValidationException()
         {
-            // Arrange
             var cardId = Guid.NewGuid();
+            var deckId = Guid.NewGuid();
+
             var existingCard = new Card
             {
                 Id = cardId,
+                DeckId = deckId,
                 IsSimplified = true,
                 GeneratedContext = "Some text"
             };
 
-            _cardRepoMock.Setup(repo => repo.GetByIdAsync(cardId)).ReturnsAsync(existingCard);
+            var existingDeck = new Deck { Id = deckId, CreatedId = _testUserId };
 
-            // Act & Assert
+            _cardRepoMock.Setup(repo => repo.GetByIdAsync(cardId)).ReturnsAsync(existingCard);
+            _deckRepoMock.Setup(repo => repo.GetByIdAsync(deckId)).ReturnsAsync(existingDeck);
+
             var exception = await Assert.ThrowsAsync<LexiContext.Domain.Exceptions.ValidationException>(
-                () => _cardService.SimplifyCardAsync(cardId)
+                () => _cardService.SimplifyCardAsync(cardId, _testUserId)
             );
 
             Assert.Contains("This sentence has already been simplified", exception.Message);
@@ -73,7 +80,6 @@ namespace LexiContext.Tests.Services
         [Fact]
         public async Task SimplifyCardAsync_WhenValidCard_SimplifiesAndUpdatesDatabase()
         {
-            // Arrange
             var cardId = Guid.NewGuid();
             var deckId = Guid.NewGuid();
 
@@ -91,7 +97,8 @@ namespace LexiContext.Tests.Services
                 Id = deckId,
                 ProficiencyLevel = ProficiencyLevel.Intermediate,
                 TargetLanguage = LearningLanguage.English,
-                NativeLanguage = LearningLanguage.Ukrainian
+                NativeLanguage = LearningLanguage.Ukrainian,
+                CreatedId = _testUserId
             };
 
             var aiResult = new AiContextResult(
@@ -110,10 +117,8 @@ namespace LexiContext.Tests.Services
                 It.IsAny<LearningLanguage>(), It.IsAny<ProficiencyLevel>()
             )).ReturnsAsync(aiResult);
 
-            // Act
-            var result = await _cardService.SimplifyCardAsync(cardId);
+            var result = await _cardService.SimplifyCardAsync(cardId, _testUserId);
 
-            // Assert
             Assert.NotNull(result);
             Assert.True(result.IsSimplified);
             Assert.Equal("A simple bug.", result.GeneratedContext);
@@ -124,7 +129,6 @@ namespace LexiContext.Tests.Services
         [Fact]
         public async Task UpdateCardAsync_WhenGeneratingNewAiContext_ResetsIsSimplifiedFlag()
         {
-            // Arrange
             var cardId = Guid.NewGuid();
             var deckId = Guid.NewGuid();
 
@@ -133,10 +137,10 @@ namespace LexiContext.Tests.Services
                 Id = cardId,
                 DeckId = deckId,
                 Front = "Old Word",
-                IsSimplified = true 
+                IsSimplified = true
             };
 
-            var existingDeck = new Deck { Id = deckId };
+            var existingDeck = new Deck { Id = deckId, CreatedId = _testUserId };
             var updateDto = new UpdateCardDto { Front = "New Word", GenerateAiContext = true };
 
             var aiResult = new AiContextResult(
@@ -152,10 +156,9 @@ namespace LexiContext.Tests.Services
             _aiServiceMock.Setup(ai => ai.GetAiContextAsync(It.IsAny<string>(), It.IsAny<LearningLanguage>(), It.IsAny<LearningLanguage>(), It.IsAny<ProficiencyLevel>(), It.IsAny<string>(), It.IsAny<AiTone>()))
                 .ReturnsAsync(aiResult);
 
-            // Act
-            var result = await _cardService.UpdateCardAsync(cardId, updateDto);
+            // 👈 Передаємо _testUserId
+            var result = await _cardService.UpdateCardAsync(cardId, updateDto, _testUserId);
 
-            // Assert
             Assert.False(result.IsSimplified);
             _cardRepoMock.Verify(repo => repo.UpdateAsync(It.Is<Card>(c => c.IsSimplified == false)), Times.Once);
         }
@@ -163,20 +166,18 @@ namespace LexiContext.Tests.Services
         [Fact]
         public async Task CreateCardAsync_ShouldThrowValidationException_WhenDataIsInvalid()
         {
-            // ARRANGE: 
             var invalidDto = new CreateCardDto
             {
-                Front = "", 
+                Front = "",
                 DeckId = Guid.NewGuid()
             };
 
             _createValidatorMock
                 .Setup(v => v.ValidateAsync(invalidDto, default))
-                .ThrowsAsync(new LexiContext.Domain.Exceptions.ValidationException("Front is required"));
+                .ThrowsAsync(new Domain.Exceptions.ValidationException("Front is required"));
 
-            // ACT & ASSERT: 
             await Assert.ThrowsAsync<LexiContext.Domain.Exceptions.ValidationException>(() =>
-                _cardService.CreateCardAsync(invalidDto));
+                _cardService.CreateCardAsync(invalidDto, _testUserId));
 
             _cardRepoMock.Verify(r => r.CreateAsync(It.IsAny<Card>()), Times.Never);
         }
@@ -184,16 +185,14 @@ namespace LexiContext.Tests.Services
         [Fact]
         public async Task UpdateCardAsync_ShouldThrowValidationException_WhenDataIsInvalid()
         {
-            // ARRANGE: 
             var invalidDto = new UpdateCardDto { Front = "" };
 
             _updateValidatorMock
                 .Setup(v => v.ValidateAsync(invalidDto, default))
                 .ThrowsAsync(new LexiContext.Domain.Exceptions.ValidationException("Front is required"));
 
-            // ACT & ASSERT
             await Assert.ThrowsAsync<LexiContext.Domain.Exceptions.ValidationException>(() =>
-                _cardService.UpdateCardAsync(Guid.NewGuid(), invalidDto));
+                _cardService.UpdateCardAsync(Guid.NewGuid(), invalidDto, _testUserId));
 
             _cardRepoMock.Verify(r => r.UpdateAsync(It.IsAny<Card>()), Times.Never);
         }

@@ -1,4 +1,4 @@
-﻿namespace LexiContext.Application.Models
+﻿namespace LexiContext.Application.Models.Ai
 {
     public record AiContextResult
     (

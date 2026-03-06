@@ -1,4 +1,4 @@
-﻿using LexiContext.Application.Models;
+﻿using LexiContext.Application.Models.Ai;
 using LexiContext.Domain.Enums;
 
 namespace LexiContext.Application.Services.Interfaces
@@ -13,8 +13,9 @@ namespace LexiContext.Application.Services.Interfaces
             string deckContext,
             AiTone tone);
 
-        Task<string> TranslateWordAsync(string word, 
-            LearningLanguage learningLanguage, 
+        Task<string> TranslateWordAsync(
+            string word,
+            LearningLanguage learningLanguage,
             LearningLanguage nativeLanguage);
 
         Task<AiContextResult> SimplifyContextAsync(
@@ -23,5 +24,13 @@ namespace LexiContext.Application.Services.Interfaces
             LearningLanguage learningLanguage,
             LearningLanguage nativeLanguage,
             ProficiencyLevel simplerLevel);
+
+        Task<AiStoryResult> GenerateStoryAsync(
+            List<string> targetWords,
+            LearningLanguage learningLanguage,
+            LearningLanguage nativeLanguage,
+            ProficiencyLevel level,
+            StoryGenre genre,
+            int aiNewWordsCount);
     }
 }
