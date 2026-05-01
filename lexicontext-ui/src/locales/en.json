@@ -1,0 +1,202 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "generate": "Generate",
+    "generating": "Generating...",
+    "save": "Save",
+    "saving": "Saving...",
+    "read": "Read"
+  },
+  "navbar": {
+    "myDecks": "My Decks",
+    "stories": "Stories",
+    "statistics": "Statistics",
+    "logout": "Logout"
+  },
+  "statistics": {
+    "title": "Learning Statistics",
+    "activity": {
+      "title": "Activity Calendar (Last Year)",
+      "noActivity": "No activity",
+      "cardsTooltip": "cards studied"
+    },
+    "mastery": {
+      "title": "Vocabulary Mastery Analysis",
+      "subtitle": "Distribution of all your cards by learning stages"
+    },
+    "forecast": {
+      "title": "Review Forecast",
+      "subtitle": "How many cards are scheduled for the next 7 days"
+    },
+    "recall": {
+      "placeholder": "Recall Quality chart will be here soon"
+    }
+  },
+  "constants": {
+    "languages": {
+      "en": "English",
+      "uk": "Ukrainian",
+      "de": "German",
+      "pl": "Polish",
+      "es": "Spanish",
+      "fr": "French",
+      "it": "Italian",
+      "zh": "Chinese",
+      "ja": "Japanese"
+    },
+    "proficiency": {
+      "beginner": "Beginner (A1-A2)",
+      "intermediate": "Intermediate (B1-B2)",
+      "advanced": "Advanced (C1-C2)"
+    },
+    "tones": {
+      "neutral": "Neutral",
+      "business": "Professional (Business)",
+      "slang": "Casual (Slang)",
+      "academic": "Academic"
+    }
+  },
+  "auth": {
+    "sessionExpired": "Your session has expired. Please log in again to continue.",
+    "subtitle": "Use your Google Account for quick and secure login",
+    "errorMsg": "Failed to log in via Google. Check the console."
+  },
+  "dashboard": {
+    "title": "My Decks",
+    "createBtn": "Create Deck",
+    "noDecks": "You don't have any decks yet. Create your first one!",
+    "untitled": "Untitled",
+    "stats": { "new": "New:", "learning": "Learning:", "review": "To Review:" },
+    "studyBtn": "Study"
+  },
+  "stories": {
+    "title": "My Stories",
+    "generateBtn": "Generate new",
+    "noStoriesTitle": "You don't have any stories yet.",
+    "noStoriesDesc": "Go to any deck and click the 'Story' button to let AI write one for you.",
+    "defaultGenre": "Story",
+    "generating": "Generating...",
+    "loadingMessages": [
+      "AI is sharpening its pencils for your story...",
+      "Coming up with some juicy plot twists...",
+      "Picking the best words for your level...",
+      "Checking grammar and style guides...",
+      "Almost there! Grab a coffee, the story is on its way...",
+      "Searching for inspiration in the dictionaries..."
+    ]
+},
+  "storyReader": {
+    "created": "Created:",
+    "deleteBtn": "Delete Story",
+    "deleteConfirm": "Are you sure you want to delete this story?",
+    "deleteConfirmTitle": "Delete Story?",
+    "deleteConfirmMsg": "This action cannot be undone. Are you sure you want to delete this story?",
+    "vocabTitle": "Story Vocabulary",
+    "table": {
+      "word": "Word / Phrase",
+      "reading": "Reading",
+      "translation": "Translation",
+      "add": "Add"
+    },
+    "inDeck": "In Deck",
+    "addToDeck": "Add to Deck",
+    "addSuccess": "Word successfully added to the deck!",
+    "loadError": "Failed to load the story.",
+    "deleteError": "Failed to delete the story."
+  },
+  "study": {
+    "emptyTitle": "There are no cards to study in this deck today. 📭",
+    "emptyDesc": "You have already reviewed all available words, or the deck is empty.",
+    "backBtn": "Back to Deck",
+    "successTitle": "Great job! 🎉",
+    "successDesc": "You have completed all scheduled cards for today.",
+    "allDecksBtn": "To All Decks",
+    "settingsBtn": "Deck Settings",
+    "flipHint": "Click to flip",
+    "thinkHint": "Think about the translation before revealing the card",
+    "buttons": { "again": "AGAIN", "hard": "HARD", "good": "GOOD" }
+  },
+  "deckDetails": {
+    "editTooltip": "Deck Settings",
+    "deleteTooltip": "Delete Deck",
+    "queue": "In Queue (New):",
+    "learning": "Learning:",
+    "toReview": "To Review:",
+    "btnStudy": "Study",
+    "btnStory": "Story",
+    "btnAddCard": "Card",
+    "cardsCount": "Cards in deck ({{count}})",
+    "tableFront": "Original",
+    "tableBack": "Translation",
+    "tableContext": "Example / Sentence",
+    "tableActions": "Actions",
+    "btnGenAi": "Generate AI",
+    "tooltipSimplify": "Simplify sentence (AI)",
+    "tooltipClear": "Delete sentence",
+    "tooltipDelete": "Delete card",
+    "empty": "The deck is empty.",
+    "mastered": "Mastered"
+  },
+  "modals": {
+    "createDeck": {
+      "title": "Create a New Deck",
+      "subtitle": "Name your deck and select the languages you want to study.",
+      "nameLabel": "Deck Name *",
+      "namePlaceholder": "E.g. Business English...",
+      "nameError": "Deck name is required",
+      "descLabel": "Description (Optional)",
+      "descPlaceholder": "What are these words about?",
+      "targetLang": "Language you are learning",
+      "nativeLang": "Your native language",
+      "limitsTitle": "Daily Study Limits (Queue)",
+      "newCardsLimit": "New cards per day",
+      "reviewLimit": "Reviews per day",
+      "recommended": "Recommended:",
+      "aiSettingsTitle": "AI Sentence Generation Settings",
+      "profLevel": "Your proficiency level",
+      "aiTone": "Sentence tone",
+      "makePublic": "Make deck public",
+      "createBtn": "Create Deck"
+    },
+    "editDeck": {
+      "title": "Deck Settings",
+      "saveBtn": "Save Changes",
+      "limitsTooltip": "We recommend 15-20 new words and 50-100 reviews per day. Larger limits may lead to overload.",
+      "resetBtn": "Reset"
+    },
+    "addCard": {
+      "title": "Add New Card",
+      "frontLabel": "Original (Word or Phrase)",
+      "backLabel": "Translation in your language",
+      "aiSwitch": "Generate example sentence (AI)",
+      "aiHintOn": "AI will create a natural sentence matching your proficiency level.",
+      "aiHintOff": "Card will be saved quickly, with just the word and translation."
+    },
+    "story": {
+      "title": "New Story",
+      "description": "AI will use up to 10 random words from this deck to create a unique text at your proficiency level.",
+      "chooseGenre": "Choose a genre",
+      "waitMsg": "AI is writing the story... This may take up to 15 seconds.",
+      "genres": {
+        "fairyTale": "Fairy Tale",
+        "everydayLife": "Everyday Life",
+        "dialogue": "Dialogue",
+        "businessEmail": "Business Email",
+        "newsReport": "News Report",
+        "sciFi": "Sci-Fi"
+      }
+    },
+    "deleteDeck": {
+      "title": "Delete Deck?",
+      "messagePart1": "Are you sure you want to delete the deck",
+      "messagePart2": "? All cards, generated sentences, and your progress will be permanently lost."
+    },
+    "errors": {
+      "aiServiceOverloaded": "The story generation service is currently overloaded. Please try again in 1-2 minutes.",
+      "noServerResponse": "Could not connect to the server. Please check if the backend is running.",
+      "timeout": "Response timeout. The AI is taking too long to reply.",
+      "unknown": "An error occurred. Please try again later."
+    }
+  }
+}
