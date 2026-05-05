@@ -2,6 +2,7 @@
 using LexiContext.Domain.Entities;
 using LexiContext.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+
 namespace LexiContext.Infrastructure.Repositories
 {
     public class StoryRepository : IStoryRepository
@@ -24,6 +25,7 @@ namespace LexiContext.Infrastructure.Repositories
         {
             return await _context.Stories
                 .Include(s => s.Phrases)
+                .Include(s => s.Deck)
                 .FirstOrDefaultAsync(s => s.Id == id);
         }
 
@@ -31,6 +33,7 @@ namespace LexiContext.Infrastructure.Repositories
         {
             return await _context.Stories
                 .AsNoTracking()
+                .Include(s => s.Deck)
                 .Where(s => s.CreatedId == userId)
                 .OrderByDescending(s => s.CreatedAt)
                 .ToListAsync();

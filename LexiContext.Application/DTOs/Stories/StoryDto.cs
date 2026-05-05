@@ -8,6 +8,7 @@ namespace LexiContext.Application.DTOs.Stories
         public string Content { get; set; } = string.Empty;
         public StoryGenre Genre { get; set; }
         public Guid? DeckId { get; set; }
+        public string? DeckName { get; set; }
         public DateTime CreatedAt { get; set; }
 
         public List<StoryPhraseDto> Phrases { get; set; } = new();

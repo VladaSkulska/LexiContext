@@ -6,5 +6,6 @@
         public string Phrase { get; set; } = string.Empty;
         public string Translation { get; set; } = string.Empty;
         public string Reading { get; set; } = string.Empty;
+        public bool IsAlreadyInDeck { get; set; }
     }
 }

@@ -11,10 +11,11 @@ namespace LexiContext.Application.Services
     {
         private readonly HttpClient _httpClient;
         private readonly string _aiApiKey;
-        private readonly string _model;
         private readonly string _baseUrl;
+        private readonly string _model;
         private readonly ILogger<AiContextService> _logger;
 
+        #region Prompts
         private const string UniversalPrompt = """
             Task: Generate a high-quality example sentence for the word '{0}' in {1}.
             User Level: {2}.
@@ -29,20 +30,22 @@ namespace LexiContext.Application.Services
             4. Tone & Realism: Ensure the sentence sounds natural, not like a textbook. Tone: {4}.
             5. Accuracy: Translation into {5} must be natural, not literal.
             6. Language-Specific Nuances (CRITICAL):
-               - WORD STRESS (UA, ES, IT): If {1} is Ukrainian, Spanish, or Italian, ALWAYS use an acute accent mark (´) over the stressed vowel in BOTH the 'correctedWord' and 'generatedContext' fields (e.g., "зáмок", "calendário").
+               - WORD STRESS: NEVER use acute accent marks (´) in the translation language ({5}). Use them ONLY if the learning language ({1}) is Ukrainian.
                - NOUNS & PLURALS (German, French, Spanish, etc.): If '{0}' is a noun, you MUST include its definite article (der/die/das, el/la). For GERMAN, also include the Plural form in 'correctedWord' (e.g., User inputs "buch" -> return "das Buch (die Bücher)").
                - VERB VALENCY (DE, EN): If '{0}' is a German or English verb, include its required preposition and case in 'correctedWord' (e.g., "warten (auf + Akk)", "depend (on + obj)").
                - JAPANESE/CHINESE: Default to standard polite form (Desu/Masu for Japanese) unless Tone dictates otherwise. Use natural phrasing, not robotic translations.
                - SLAVIC LANGUAGES: Ensure perfect case agreement (відмінки) in the sentence.
             7. Sensitive Content & Slang: Do not censor words related to conflict, anatomy, or common slang/profanity if they are part of natural language learning. Provide a neutral, educational context. If a word is rude or offensive, explicitly label it in the 'wordTranslation' field.
             8. Edge Cases & Corrections: 
-               - If '{0}' is a grammatical particle, DO NOT use dry linguistic terms only. Provide a friendly explanation in 'wordTranslation'.
+                - If '{0}' is a grammatical particle, DO NOT use dry linguistic terms only. Provide a friendly explanation in 'wordTranslation'.
                - If '{0}' contains a typo, lacks an article, or has incorrect capitalization, return the PERFECT dictionary form in 'correctedWord'.
-            9. Phonetic Reading (CRITICAL FOR ASIAN LANGUAGES): 
-               - If {1} is Japanese, provide the reading in 'contextReading' using a WORD-BY-WORD format with brackets and HIRAGANA: "Word[hiragana]". Example: "私[わたし] は[わ] 先生[せんせい] です[です]". DO NOT use Romaji.
-               - If {1} is Chinese, provide Pinyin in 'contextReading' using a WORD-BY-WORD format with brackets: "Hanzi[pinyin]". Example: "我[wǒ] 在[zài] 学校[xuéxiào]".
-               - For ANY OTHER language, leave 'contextReading' strictly as "".
-            10. Word Translation & Register: Provide the translation of the 'correctedWord' into {5} in 'wordTranslation'. Note specific registers (formal/informal).
+            9. Asian Languages Phonetics (CRITICAL): 
+                - If {1} is Japanese or Chinese, you MUST wrap ALL Kanji/Hanzi characters in BOTH the 'correctedWord' and 'generatedContext' fields using HTML <ruby> tags.
+                - Japanese Example: "<ruby>先生<rt>せんせい</rt></ruby> です". (Use Hiragana in <rt>).
+                - Chinese Example: "<ruby>学校<rt>xuéxiào</rt></ruby>". (Use Pinyin in <rt>).
+                - DO NOT use the bracket format like "Word[reading]". ONLY use <ruby>.
+                - FOR ALL EUROPEAN LANGUAGES (German, English, Spanish, etc.): DO NOT use <ruby> tags. The 'contextReading' field MUST be strictly empty "".
+            10. Word Translation & Register: Provide the translation of the 'correctedWord' into {5} in 'wordTranslation'. Note specific registers (formal/informal). STRICT: NO STRESS MARKS in 'wordTranslation' or 'contextTranslation' (e.g., write 'їсти', not 'ї́сти').
             11. JSON Formatting: Escape all internal double quotes inside JSON string values (e.g., use \" if quoting something).
 
             Return ONLY a valid JSON object exactly in this format: 
@@ -64,15 +67,17 @@ namespace LexiContext.Application.Services
             2. Language Nuances (Target - {1}):
                - GENDER & PLURALS: If {1} is German, French, Spanish, or Italian and the word is a noun, ALWAYS include the definite article and Plural form (e.g., "der Zug (die Züge)", "la casa (las casas)").
                - VERB VALENCY: If {1} is German or English and the word is a verb, include its required preposition and case (e.g., "warten (auf + Akk)", "depend (on + obj)").
-               - WORD STRESS (UA, ES, IT): For Ukrainian, Spanish, or Italian, ALWAYS use an acute accent mark (´) over the stressed vowel (e.g., "зáмок", "inglés").
-               - JAPANESE/CHINESE: Provide the word in its native script with its reading in brackets: "Word[hiragana/pinyin]". Example: "先生[せんせい]", "学校[xuéxiào]".
+               - WORD STRESS: NEVER use acute accent marks (´) in the translation language ({2}). Use them ONLY if the learning language ({1}) is Ukrainian.
+               - JAPANESE/CHINESE: Wrap ALL Kanji/Hanzi in the corrected word using <ruby> tags. Example: "<ruby>先生<rt>せんせい</rt></ruby>" or "<ruby>好吃<rt>hǎochī</rt></ruby>". DO NOT use bracket format like "Word[reading]".
+               - EUROPEAN LANGUAGES: NO brackets and NO phonetic reading for German, English, Spanish, etc.
             3. Translation (Native - {2}): 
-               - Provide the most natural translation into {2}. 
-               - If it's a technical term/slang, use the native word first, then slang in parentheses: "помилка (баг)".
+                - Provide the most natural translation into {2}. 
+                - STRICT: NO STRESS MARKS (e.g., 'смачний', not 'смачни́й').
+                - If it's a technical term/slang, use the native word first, then slang in parentheses: "помилка (баг)".
             4. Tone: Match the tone of the source word.
             5. No Metadata: Return ONLY the final result in the exact format: "CorrectedWord - Translation". 
-               Example Output: "der Zug (die Züge) - потяг" or "wárten (auf + Akk) - чекáти".
-    
+                Example Output: "der Zug (die Züge) - потяг" or "<ruby>待<rt>ま</rt></ruby>つ - чекати".
+            
             Output: Just the corrected form and translation separated by a dash.
             """;
 
@@ -87,13 +92,14 @@ namespace LexiContext.Application.Services
             1. Focus: You MUST keep the target word "{0}" in the new sentence. Do NOT change or remove it.
             2. Vocabulary & Grammar: Adapt strictly to the {4} level. Keep the sentence very short (5-10 words maximum). AVOID complex verbs and passive voice.
             3. Meaning: Keep the core meaning of the original sentence, but express it using simple synonyms appropriate for the {4} level.
-            4. Word Stress: If {2} is Ukrainian, Spanish, or Italian, ALWAYS use an acute accent mark (´) over the stressed vowel in the new 'generatedContext'.
-            5. Phonetic Reading: 
-               - If {2} is Japanese, provide Hiragana reading in 'contextReading' in bracket format: "Word[hiragana]".
-               - If {2} is Chinese, provide Pinyin in 'contextReading' in bracket format: "Hanzi[pinyin]".
-               - For ANY OTHER language, leave 'contextReading' strictly as "".
-            6. JSON Formatting: Escape all internal double quotes inside JSON string values.
-            7. Output: Return ONLY a valid JSON object exactly in this format: 
+            4. Word Stress: NEVER use acute accent marks (´) in the translation language ({3}). Use them ONLY if the learning language ({2}) is Ukrainian.
+            5. Asian Languages Phonetics: 
+               - If {2} is Japanese or Chinese, wrap ALL Kanji/Hanzi in the 'generatedContext' using <ruby> tags. 
+               - DO NOT use bracket format. 
+               - FOR ALL EUROPEAN LANGUAGES: Leave 'contextReading' strictly as "".
+            6. Translation: STRICTLY NO STRESS MARKS in the 'contextTranslation' field.
+            7. JSON Formatting: Escape all internal double quotes inside JSON string values.
+            8. Output: Return ONLY a valid JSON object exactly in this format: 
             {{ 
                 "generatedContext": "...", 
                 "contextTranslation": "...", 
@@ -118,20 +124,27 @@ namespace LexiContext.Application.Services
             2. AI Suggested Words: Introduce EXACTLY {5} NEW, highly useful words, idioms, or colloquial phrases that fit the story naturally. Enclose these new items in bold and italic tags: <b><i>phrase or word</i></b>.
             3. Length: Keep the story around 150-250 words. Divide it into highly readable paragraphs.
             4. Language-Specific Nuances & Formatting:
-               - WORD STRESS (UA, ES, IT): If {1} is Ukrainian, Spanish, or Italian, ALWAYS use an acute accent mark (´) over the stressed vowel in ALL text within the 'content' field.
+               - WORD STRESS (UKRAINIAN ONLY): If {1} is Ukrainian, ALWAYS use an acute accent mark (´) over the stressed vowel in ALL text within the 'content' field. DO NOT use accent marks for German, English, or other languages.
                - GERMAN/FRENCH/SPANISH: Ensure perfect noun gender and case agreement in the story.
                - JAPANESE/CHINESE: If {1} is Japanese, wrap ALL kanji characters in <ruby> tags with HIRAGANA (e.g., <ruby>先生<rt>せんせい</rt></ruby>). DO NOT use Romaji. If Chinese, use <ruby> tags with Pinyin. Use standard polite form (Desu/Masu) unless characters are close friends.
-            5. Vocabulary Extraction (PRIORITIZE PHRASES): 
-               - ALWAYS try to extract a SHORT USEFUL PHRASE or collocation (2-4 words) rather than just a standalone word. For example, if the word is "Zug" (train), extract "auf den Zug warten" (wait for the train).
+               - NO REPETITION: In the 'content' field, for Japanese/Chinese, use ONLY the <ruby> format. NEVER append the phonetic reading as plain text after the Kanji (e.g., "仕事しごと" is STRICTLY FORBIDDEN).
+               - PLAIN TEXT TITLE: The 'title' field MUST be pure plain text. DO NOT use <ruby> tags or any HTML in the 'title'.
+            5. Vocabulary Extraction (CRITICAL): 
+                - In the 'vocabulary' list, include ONLY the {5} NEW useful words/phrases you introduced (the <b><i> ones).
+                - DO NOT include the User's Target Words ({0}) in the 'vocabulary' list unless they are part of a completely new idiomatic phrase.
+                - READINGS: For Japanese/Chinese, use the word-by-word bracket format: "Word[reading]". FOR ALL EUROPEAN LANGUAGES (German, English, etc.), the 'reading' field MUST be strictly empty "".
+                - ALWAYS try to extract a SHORT USEFUL PHRASE or collocation (2-4 words) rather than just a standalone word. For example, if the word is "Zug" (train), extract "auf den Zug warten" (wait for the train).
                - GERMAN NOUNS: Always include the definite article and Plural form in the extraction (e.g., "das <b>Buch</b> (die Bücher)").
                - VERB VALENCY: If the extracted word is a German/English verb, include its preposition + case in the 'translation' field.
                - CRITICAL: In the 'phrase' JSON field, enclose the core Target/AI word in <b> tags to highlight it within the extracted phrase (e.g., "auf den <b>Zug</b> warten").
-               - ASIAN PHONETICS: For Japanese/Chinese, the 'reading' field MUST use the word-by-word bracket format. For Japanese use Hiragana (e.g., "学校[がっこう] の[の] 先生[せんせい]"). For Chinese use Pinyin (e.g., "写了[xiěle] 代码[dàimǎ]").
+               - NO HTML IN PHRASE: The 'phrase' field may contain <b> tags, but MUST NOT contain <ruby> tags or plain text readings.
             6. Translation Rules for Vocabulary:
-               - Provide the translation of the extracted word/phrase in {3} matching the EXACT context of the story.
+               - Provide the translation matching the story context.
+               - NO STRESS MARKS in the 'translation' field (e.g., 'проєкт', not 'проє́кт'). 
+               - STRICT CLEAN 'translation': Do NOT include ANY HTML tags or brackets. It MUST be pure plain text!
             7. Typos & Gibberish Handling: If any of the User's words contains a typo or is complete nonsense, GUESS the intended word, use the CORRECTED word in the story, and explicitly explain this in the 'translation' field.
             8. JSON Formatting: Escape all internal double quotes inside JSON string values (e.g., use \" for dialogue inside the "content" field).
-            
+
             Return ONLY a valid JSON object exactly in this format:
             {{
                 "title": "Engaging Title in {1}",
@@ -142,14 +155,16 @@ namespace LexiContext.Application.Services
             }}
             No markdown, no prefixes.
             """;
+        #endregion
 
         public AiContextService(HttpClient httpClient, IConfiguration config, ILogger<AiContextService> logger)
         {
             _httpClient = httpClient;
-            _aiApiKey = config["Gemini:ApiKey"] ?? throw new ArgumentNullException("Gemini Api key is missing");
-            _model = config["Gemini:Model"] ?? "gemini-2.5-flash";
-            _baseUrl = config["Gemini:BaseUrl"] ?? throw new ArgumentNullException("Gemini Base URL is missing");
             _logger = logger;
+
+            _aiApiKey = config["Gemini:ApiKey"] ?? throw new ArgumentNullException("Gemini Api key is missing");
+            _baseUrl = config["Gemini:BaseUrl"] ?? throw new ArgumentNullException("Gemini Base URL is missing");
+            _model = config["Gemini:Model"] ?? "gemini-2.5-flash";
         }
 
         public async Task<AiContextResult> GetAiContextAsync(string word, LearningLanguage learningLanguage, LearningLanguage nativeLanguage, ProficiencyLevel level, string deckContext, AiTone tone)
@@ -162,7 +177,7 @@ namespace LexiContext.Application.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to generate AI context for word: {Word}. Target Level: {Level}", word, level);
-                throw new InvalidOperationException("Failed to generate AI context. Card creation aborted.", ex);
+                throw new InvalidOperationException("Failed to generate AI context.", ex);
             }
         }
 
@@ -191,7 +206,7 @@ namespace LexiContext.Application.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to simplify context: '{OriginalContext}'", originalContext);
-                throw new Domain.Exceptions.AiTranslationException("Failed to simplify sentence. AI temporarily unavailable.", ex);
+                throw new Domain.Exceptions.AiTranslationException("Failed to simplify sentence.", ex);
             }
         }
 
@@ -209,11 +224,11 @@ namespace LexiContext.Application.Services
                 throw new InvalidOperationException("Failed to generate AI story.", ex);
             }
         }
-        
 
         private async Task<string> SendGeminiRequestAsync(string prompt)
         {
             var endpoint = $"{_baseUrl}{_model}:generateContent?key={_aiApiKey}";
+
             var requestBody = new { contents = new[] { new { parts = new[] { new { text = prompt } } } } };
             var content = new StringContent(JsonSerializer.Serialize(requestBody), System.Text.Encoding.UTF8, "application/json");
 

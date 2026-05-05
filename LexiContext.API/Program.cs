@@ -91,6 +91,14 @@ builder.Services.AddScoped<ICardService, CardService>();
 builder.Services.AddScoped<IStoryRepository, StoryRepository>();
 builder.Services.AddScoped<IStoryService, StoryService>();
 
+builder.Services.AddScoped<IUserSettingsRepository, UserSettingsRepository>();
+builder.Services.AddScoped<IUserSettingsService, UserSettingsService>();
+
+builder.Services.AddScoped<IStatisticsRepository, StatisticsRepository>();
+builder.Services.AddScoped<IStatisticsService, StatisticsService>();
+
+builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
+
 builder.Services.AddScoped<ISpacedRepetitionService, SpacedRepetitionService>();
 builder.Services.AddScoped<IStudyService, StudyService>();
 builder.Services.AddScoped<IUserCardProgressRepository, UserCardProgressRepository>();
@@ -99,9 +107,24 @@ builder.Services.AddScoped<IExternalAuthProvider, GoogleAuthProvider>();
 builder.Services.AddScoped<IJwtProvider, JwtService>();
 builder.Services.AddScoped<AuthService>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
+});
+
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+app.UseRouting();
+app.UseCors("AllowReactApp");
 
 if (app.Environment.IsDevelopment())
 {
@@ -113,5 +136,4 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
 app.Run();

@@ -23,7 +23,7 @@ namespace LexiContext.Application.Services
             var (newRepetitions, newIntervalDays) = CalculateRepetitionsAndInterval(
                 currentRepetitions, currentIntervalDays, newEaseFactor, recallQuality);
 
-            DateTime newReviewDate = DateTime.UtcNow.AddDays(newIntervalDays);
+            DateTime newReviewDate = DateTime.UtcNow.Date.AddDays(newIntervalDays);
 
             return new SpacedRepetitionResult(
                 newIntervalDays,
@@ -32,6 +32,7 @@ namespace LexiContext.Application.Services
                 newReviewDate
             );
         }
+
         private static int MapToSm2QualityScore(RecallQuality quality)
         {
             return quality switch
@@ -51,26 +52,38 @@ namespace LexiContext.Application.Services
         }
 
         private static (int Repetitions, int IntervalDays) CalculateRepetitionsAndInterval(
-            int currentRepetitions,
-            int currentIntervalDays,
-            double newEaseFactor,
-            RecallQuality quality)
+    int currentRepetitions,
+    int currentIntervalDays,
+    double newEaseFactor,
+    RecallQuality quality)
         {
             if (quality == RecallQuality.Fail)
             {
                 return (0, 1);
             }
 
+            if (currentRepetitions == 0)
+            {
+                if (quality == RecallQuality.Easy)
+                {
+                    return (1, 4);
+                }
+                else
+                {
+                    return (1, 1);
+                }
+            }
+
             int newRepetitions = currentRepetitions + 1;
             int newIntervalDays;
 
-            if (newRepetitions == 1)
+            if (newRepetitions == 2)
             {
-                newIntervalDays = 1;
+                newIntervalDays = (quality == RecallQuality.Easy) ? 7 : 2;
             }
-            else if (newRepetitions == 2)
+            else if (newRepetitions == 3)
             {
-                newIntervalDays = 3;
+                newIntervalDays = (quality == RecallQuality.Easy) ? 14 : 5;
             }
             else
             {

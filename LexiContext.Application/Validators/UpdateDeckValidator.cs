@@ -5,7 +5,7 @@ namespace LexiContext.Application.Validators
 {
     public class UpdateDeckValidator : AbstractValidator<UpdateDeckDto>
     {
-        public UpdateDeckValidator() 
+        public UpdateDeckValidator()
         {
             RuleFor(x => x.Title)
                 .NotEmpty().WithMessage("Deck Title can't be null.")
@@ -19,6 +19,14 @@ namespace LexiContext.Application.Validators
 
             RuleFor(x => x.Tone)
                 .IsInEnum().WithMessage("Invalid AI tone.");
+
+            RuleFor(x => x.DailyNewCardsLimit)
+                .GreaterThanOrEqualTo(0).WithMessage("New cards limit cannot be negative.")
+                .LessThanOrEqualTo(100).WithMessage("New cards limit cannot exceed 100 per day.");
+
+            RuleFor(x => x.DailyReviewLimit)
+                .GreaterThanOrEqualTo(0).WithMessage("Review cards limit cannot be negative.")
+                .LessThanOrEqualTo(500).WithMessage("Review cards limit cannot exceed 500 per day.");
         }
     }
 }

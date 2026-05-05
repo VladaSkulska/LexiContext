@@ -1,4 +1,5 @@
-﻿using LexiContext.Application.Interfaces.Repos;
+﻿// CardRepository.cs
+using LexiContext.Application.Interfaces.Repos;
 using LexiContext.Domain.Entities;
 using LexiContext.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -17,9 +18,7 @@ namespace LexiContext.Infrastructure.Repositories
         public async Task<Guid> CreateAsync(Card card)
         {
             await _context.Cards.AddAsync(card);
-
             await _context.SaveChangesAsync();
-
             return card.Id;
         }
 
@@ -37,14 +36,12 @@ namespace LexiContext.Infrastructure.Repositories
         public async Task UpdateAsync(Card card)
         {
             _context.Cards.Update(card);
-
             await _context.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(Card card)
         {
             _context.Cards.Remove(card);
-
             await _context.SaveChangesAsync();
         }
 
@@ -55,6 +52,11 @@ namespace LexiContext.Infrastructure.Repositories
                 .OrderByDescending(c => c.CreatedAt)
                 .Take(limit)
                 .ToListAsync();
+        }
+        public async Task<bool> ExistsAsync(Guid deckId, string front)
+        {
+            return await _context.Cards
+                .AnyAsync(c => c.DeckId == deckId && c.Front.ToLower() == front.ToLower());
         }
     }
 }

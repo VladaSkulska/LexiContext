@@ -13,7 +13,6 @@ namespace LexiContext.Infrastructure.Persistence
         {
             base.OnModelCreating(modelBuilder);
 
-            // Сид тестового користувача для розробки
             var testUserId = Guid.Parse("00000000-0000-0000-0000-000000000001");
 
             modelBuilder.Entity<User>().HasData(new User
@@ -28,10 +27,34 @@ namespace LexiContext.Infrastructure.Persistence
                 UpdatedAt = DateTime.UtcNow
             });
 
-            modelBuilder.Entity<StoryPhrase>()
-                .HasOne(p => p.Story)
-                .WithMany(s => s.Phrases)
-                .HasForeignKey(p => p.StoryId)
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Settings)
+                .WithOne(s => s.User)
+                .HasForeignKey<UserSettings>(s => s.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserCardProgress>()
+                .HasOne(up => up.User)
+                .WithMany(u => u.Progress)
+                .HasForeignKey(up => up.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserCardProgress>()
+                .HasOne(up => up.Card)
+                .WithMany()
+                .HasForeignKey(up => up.CardId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserActivity>()
+                .HasOne(ua => ua.User)
+                .WithMany()
+                .HasForeignKey(ua => ua.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Deck>()
+                .HasOne(d => d.Creater)
+                .WithMany(u => u.CreatedDecks)
+                .HasForeignKey(d => d.CreatedId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Card>()
@@ -45,7 +68,14 @@ namespace LexiContext.Infrastructure.Persistence
                 .WithMany()
                 .HasForeignKey(s => s.DeckId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<StoryPhrase>()
+                .HasOne(p => p.Story)
+                .WithMany(s => s.Phrases)
+                .HasForeignKey(p => p.StoryId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
+
         public DbSet<User> Users => Set<User>();
         public DbSet<Deck> Decks => Set<Deck>();
         public DbSet<Card> Cards => Set<Card>();
@@ -53,5 +83,6 @@ namespace LexiContext.Infrastructure.Persistence
         public DbSet<UserCardProgress> UserCardProgresses => Set<UserCardProgress>();
         public DbSet<Story> Stories => Set<Story>();
         public DbSet<StoryPhrase> StoryPhrases => Set<StoryPhrase>();
+        public DbSet<UserActivity> UserActivities => Set<UserActivity>();
     }
 }

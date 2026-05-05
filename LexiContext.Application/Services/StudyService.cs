@@ -15,19 +15,22 @@ namespace LexiContext.Application.Services
         private readonly IUserRepository _userRepository;
         private readonly ISpacedRepetitionService _srsService;
         private readonly IValidator<ReviewCardDto> _reviewCardValidator;
+        private readonly IUserActivityRepository _activityRepository;
 
         public StudyService(
             IUserCardProgressRepository progressRepository,
             ICardRepository cardRepository,
             IUserRepository userRepository,
             ISpacedRepetitionService srsService,
-            IValidator<ReviewCardDto> reviewCardValidator)
+            IValidator<ReviewCardDto> reviewCardValidator,
+            IUserActivityRepository activityRepository)
         {
             _progressRepository = progressRepository;
             _cardRepository = cardRepository;
             _userRepository = userRepository;
             _srsService = srsService;
             _reviewCardValidator = reviewCardValidator;
+            _activityRepository = activityRepository;
         }
 
         public async Task<List<DueCardDto>> GetDueCardsAsync(Guid deckId, Guid userId)
@@ -82,6 +85,8 @@ namespace LexiContext.Application.Services
                 await _progressRepository.UpdateAsync(progress);
 
             await UpdateUserGamificationAsync(userId);
+
+            await RecordUserActivityAsync(userId);
         }
 
         private async Task<(UserCardProgress Progress, bool IsNew)> GetOrCreateProgressAsync(Guid userId, Guid cardId)
@@ -136,6 +141,28 @@ namespace LexiContext.Application.Services
             }
 
             await _userRepository.UpdateAsync(user);
+        }
+
+        private async Task RecordUserActivityAsync(Guid userId)
+        {
+            var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
+
+            var activity = await _activityRepository.GetByDateAsync(userId, today);
+
+            if (activity == null)
+            {
+                await _activityRepository.CreateAsync(new UserActivity
+                {
+                    UserId = userId,
+                    Date = today,
+                    CardsStudied = 1
+                });
+            }
+            else
+            {
+                activity.CardsStudied++;
+                await _activityRepository.UpdateAsync(activity);
+            }
         }
     }
 }

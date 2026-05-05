@@ -23,8 +23,12 @@ namespace LexiContext.Tests.Services
         private readonly Mock<IValidator<CreateCardDto>> _createValidatorMock;
         private readonly Mock<IValidator<UpdateCardDto>> _updateValidatorMock;
         private readonly Mock<ILogger<CardService>> _loggerMock;
-        private readonly CardService _cardService;
 
+        // Додаємо моки для нових залежностей (прогрес та алгоритм повторень)
+        private readonly Mock<IUserCardProgressRepository> _progressRepoMock;
+        private readonly Mock<ISpacedRepetitionService> _spacedRepetitionMock;
+
+        private readonly CardService _cardService;
         private readonly Guid _testUserId = Guid.NewGuid();
 
         public CardServiceTests()
@@ -36,18 +40,25 @@ namespace LexiContext.Tests.Services
             _updateValidatorMock = new Mock<IValidator<UpdateCardDto>>();
             _loggerMock = new Mock<ILogger<CardService>>();
 
+            // Ініціалізуємо нові моки
+            _progressRepoMock = new Mock<IUserCardProgressRepository>();
+            _spacedRepetitionMock = new Mock<ISpacedRepetitionService>();
+
             _createValidatorMock.Setup(v => v.ValidateAsync(It.IsAny<CreateCardDto>(), default))
                 .ReturnsAsync(new ValidationResult());
             _updateValidatorMock.Setup(v => v.ValidateAsync(It.IsAny<UpdateCardDto>(), default))
                 .ReturnsAsync(new ValidationResult());
 
+            // Передаємо всі 8 параметрів згідно з оновленим конструктором
             _cardService = new CardService(
                 _cardRepoMock.Object,
                 _deckRepoMock.Object,
-                _updateValidatorMock.Object,
-                _createValidatorMock.Object,
-                _aiServiceMock.Object,
-                _loggerMock.Object
+                _progressRepoMock.Object,       // 3-й
+                _spacedRepetitionMock.Object,   // 4-й
+                _updateValidatorMock.Object,    // 5-й
+                _createValidatorMock.Object,    // 6-й
+                _aiServiceMock.Object,          // 7-й
+                _loggerMock.Object              // 8-й
             );
         }
 
@@ -101,13 +112,7 @@ namespace LexiContext.Tests.Services
                 CreatedId = _testUserId
             };
 
-            var aiResult = new AiContextResult(
-                "A simple bug.",
-                "Простий баг.",
-                "",
-                "баг",
-                ""
-            );
+            var aiResult = new AiContextResult("A simple bug.", "Простий баг.", "", "баг", "");
 
             _cardRepoMock.Setup(repo => repo.GetByIdAsync(cardId)).ReturnsAsync(existingCard);
             _deckRepoMock.Setup(repo => repo.GetByIdAsync(deckId)).ReturnsAsync(existingDeck);
@@ -143,20 +148,13 @@ namespace LexiContext.Tests.Services
             var existingDeck = new Deck { Id = deckId, CreatedId = _testUserId };
             var updateDto = new UpdateCardDto { Front = "New Word", GenerateAiContext = true };
 
-            var aiResult = new AiContextResult(
-                "New complex context",
-                "Новий контекст",
-                "",
-                "Нове слово",
-                ""
-            );
+            var aiResult = new AiContextResult("New complex context", "Новий контекст", "", "Нове слово", "");
 
             _cardRepoMock.Setup(repo => repo.GetByIdAsync(cardId)).ReturnsAsync(existingCard);
             _deckRepoMock.Setup(repo => repo.GetByIdAsync(deckId)).ReturnsAsync(existingDeck);
             _aiServiceMock.Setup(ai => ai.GetAiContextAsync(It.IsAny<string>(), It.IsAny<LearningLanguage>(), It.IsAny<LearningLanguage>(), It.IsAny<ProficiencyLevel>(), It.IsAny<string>(), It.IsAny<AiTone>()))
                 .ReturnsAsync(aiResult);
 
-            // 👈 Передаємо _testUserId
             var result = await _cardService.UpdateCardAsync(cardId, updateDto, _testUserId);
 
             Assert.False(result.IsSimplified);
@@ -166,11 +164,7 @@ namespace LexiContext.Tests.Services
         [Fact]
         public async Task CreateCardAsync_ShouldThrowValidationException_WhenDataIsInvalid()
         {
-            var invalidDto = new CreateCardDto
-            {
-                Front = "",
-                DeckId = Guid.NewGuid()
-            };
+            var invalidDto = new CreateCardDto { Front = "", DeckId = Guid.NewGuid() };
 
             _createValidatorMock
                 .Setup(v => v.ValidateAsync(invalidDto, default))

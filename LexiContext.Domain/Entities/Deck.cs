@@ -5,7 +5,7 @@ namespace LexiContext.Domain.Entities
 {
     public class Deck : BaseEntity
     {
-        public string Title { get; set; } = string.Empty; // Використовуємо як Theme/Context для ШІ
+        public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public bool IsPublic { get; set; }
         public int DailyNewCardsLimit { get; set; } = 20;

@@ -1,4 +1,5 @@
 ﻿using LexiContext.Application.DTOs.Cards;
+using LexiContext.Application.DTOs.Cards.Study;
 using LexiContext.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -70,6 +71,23 @@ namespace LexiContext.API.Controllers
             var userId = GetUserId();
             await _cardService.DeleteCardAsync(id, userId);
             return NoContent();
+        }
+
+        [HttpGet("deck/{deckId}/study")]
+        public async Task<ActionResult<List<DueCardDto>>> GetCardsForStudy(Guid deckId)
+        {
+            var userId = GetUserId();
+            var result = await _cardService.GetCardsForStudyAsync(deckId, userId);
+            return Ok(result);
+        }
+
+        // ЗВЕРНИ УВАГУ: Маршрут тепер просто "review", бо ID лежить всередині DTO!
+        [HttpPost("review")]
+        public async Task<IActionResult> ReviewCard([FromBody] ReviewCardDto dto)
+        {
+            var userId = GetUserId();
+            await _cardService.ReviewCardAsync(dto, userId);
+            return Ok(); // Нам не обов'язково повертати саму картку назад, достатньо статусу 200 OK
         }
     }
 }

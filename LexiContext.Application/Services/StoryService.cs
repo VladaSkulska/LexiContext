@@ -41,7 +41,6 @@ namespace LexiContext.Application.Services
 
             var wordsList = await GetWordsForStoryAsync(dto.DeckId, MaxUserWords);
 
-            // Динамічно визначаємо розмір словника залежно від рівня
             int targetTotalWords = GetTargetVocabularySize(deck.ProficiencyLevel);
             int aiNewWordsCount = Math.Max(5, targetTotalWords - wordsList.Count);
 
@@ -60,7 +59,7 @@ namespace LexiContext.Application.Services
         public async Task<List<StoryDto>> GetUserStoriesAsync(Guid userId)
         {
             var stories = await _storyRepository.GetByUserIdAsync(userId);
-            return stories.Select(MapToStoryDto).ToList();
+            return stories.Select(s => MapToStoryDto(s)).ToList();
         }
 
         public async Task<StoryDto> GetStoryByIdAsync(Guid id, Guid userId)
@@ -71,7 +70,14 @@ namespace LexiContext.Application.Services
             if (story.CreatedId != userId)
                 throw new UnauthorizedAccessException("You don't have access to this story.");
 
-            return MapToStoryDto(story);
+            var existingWords = new HashSet<string>();
+            if (story.DeckId != Guid.Empty)
+            {
+                var cardsInDeck = await _cardRepository.GetByDeckIdAsync(story.DeckId);
+                existingWords = cardsInDeck.Select(c => c.Front.ToLower().Trim()).ToHashSet();
+            }
+
+            return MapToStoryDto(story, existingWords);
         }
 
         public async Task DeleteStoryAsync(Guid id, Guid userId)
@@ -88,7 +94,7 @@ namespace LexiContext.Application.Services
         private async Task CheckStoryLimitAsync(Guid userId)
         {
             var storiesThisWeek = await _storyRepository.CountStoriesInLastWeekAsync(userId);
-            if (storiesThisWeek >= 3)
+            if (storiesThisWeek >= 30)
             {
                 throw new ValidationException("You have reached the limit of free stories per week (3/3). Try it later or switch to Premium.");
             }
@@ -133,9 +139,10 @@ namespace LexiContext.Application.Services
                 }).ToList() ?? new List<StoryPhrase>()
             };
         }
-
-        private static StoryDto MapToStoryDto(Story story)
+        private static StoryDto MapToStoryDto(Story story, HashSet<string>? existingWords = null)
         {
+            existingWords ??= new HashSet<string>();
+
             return new StoryDto
             {
                 Id = story.Id,
@@ -143,13 +150,15 @@ namespace LexiContext.Application.Services
                 Content = story.Content,
                 Genre = story.Genre,
                 DeckId = story.DeckId,
+                DeckName = story.Deck?.Title,
                 CreatedAt = story.CreatedAt,
                 Phrases = story.Phrases.Select(p => new StoryPhraseDto
                 {
                     Id = p.Id,
                     Phrase = p.Phrase,
                     Translation = p.Translation,
-                    Reading = p.Reading
+                    Reading = p.Reading,
+                    IsAlreadyInDeck = existingWords.Contains(p.Phrase.Replace("<b>", "").Replace("</b>", "").ToLower().Trim())
                 }).ToList()
             };
         }
@@ -158,10 +167,10 @@ namespace LexiContext.Application.Services
         {
             return level switch
             {
-                ProficiencyLevel.Beginner => 35,
-                ProficiencyLevel.Intermediate => 20,
-                ProficiencyLevel.Advanced => 12,
-                _ => 20
+                ProficiencyLevel.Beginner => 15,
+                ProficiencyLevel.Intermediate => 12,
+                ProficiencyLevel.Advanced => 8,
+                _ => 15
             };
         }
     }

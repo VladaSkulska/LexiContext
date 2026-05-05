@@ -24,7 +24,7 @@ namespace LexiContext.Application.Services
         {
             if (string.IsNullOrWhiteSpace(googleToken))
             {
-                throw new ArgumentException("Токен Google не може бути порожнім.", nameof(googleToken));
+                throw new ArgumentException("Google Token cannot be empty.", nameof(googleToken));
             }
 
             var externalUser = await _authProvider.VerifyTokenAsync(googleToken);
