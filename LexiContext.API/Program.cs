@@ -29,7 +29,10 @@ builder.Services.AddValidatorsFromAssemblyContaining<UpdateDeckValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCardDtoValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<UpdateCardDtoValidator>();
 
-builder.Services.AddHttpClient<IAiContextService, AiContextService>();
+builder.Services.AddHttpClient<IAiContextService, AiContextService>(client =>
+{
+    client.Timeout = TimeSpan.FromMinutes(3);
+});
 
 builder.Services.AddEndpointsApiExplorer();
 

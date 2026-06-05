@@ -47,6 +47,13 @@ namespace LexiContext.Application.Services
             var deck = await GetDeckOrThrowAsync(dto.DeckId, userId);
 
             var cleanFront = CleanString(dto.Front);
+
+            if (!dto.GenerateAiContext && (deck.TargetLanguage == LearningLanguage.Chinese || deck.TargetLanguage == LearningLanguage.Japanese))
+            {
+                cleanFront = await _aiContextService.FormatAsianWordAsync(cleanFront, deck.TargetLanguage);
+            }
+            // ================================================
+
             var exists = await _cardRepository.ExistsAsync(dto.DeckId, cleanFront.ToLower());
             if (exists)
             {
@@ -181,8 +188,17 @@ namespace LexiContext.Application.Services
         {
             await _updateCardValidator.ValidateAndThrowCustomAsync(dto);
             var existingCard = await GetCardOrThrowAsync(id, userId);
+            var deck = await GetDeckOrThrowAsync(existingCard.DeckId, userId);
 
             var cleanFront = CleanString(dto.Front);
+
+            if (!dto.GenerateAiContext && (deck.TargetLanguage == LearningLanguage.Chinese || deck.TargetLanguage == LearningLanguage.Japanese))
+            {
+                if (existingCard.Front != cleanFront)
+                {
+                    cleanFront = await _aiContextService.FormatAsianWordAsync(cleanFront, deck.TargetLanguage);
+                }
+            }
 
             if (existingCard.Front.ToLower() != cleanFront.ToLower())
             {
@@ -201,7 +217,6 @@ namespace LexiContext.Application.Services
 
             if (dto.GenerateAiContext)
             {
-                var deck = await GetDeckOrThrowAsync(existingCard.DeckId, userId);
                 await ProcessAiGenerationAsync(existingCard, deck, generateSentence: true);
                 existingCard.IsSimplified = false;
             }

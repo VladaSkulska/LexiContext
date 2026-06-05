@@ -1,7 +1,5 @@
-﻿using ValidationException = LexiContext.Domain.Exceptions.ValidationException;
+﻿using LexiContext.Domain.Exceptions;
 using LexiContext.API.Models;
-using LexiContext.Domain.Exceptions;
-using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 
 namespace LexiContext.API.Middlewares
@@ -26,7 +24,6 @@ namespace LexiContext.API.Middlewares
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An unhandled exception occurred during request processing.");
-
                 await HandleExceptionAsync(context, ex);
             }
         }
@@ -59,6 +56,18 @@ namespace LexiContext.API.Middlewares
                 {
                     StatusCode = StatusCodes.Status400BadRequest,
                     Message = "The AI service is temporarily unavailable or unable to process the word. Please enter the translation manually."
+                },
+
+                InvalidOperationException e when e.Message == "AI_503" || (e.InnerException != null && e.InnerException.Message == "AI_503") => new ErrorDetails
+                {
+                    StatusCode = StatusCodes.Status503ServiceUnavailable,
+                    Message = "Сервери ШІ зараз дуже перевантажені. Ми намагалися до них достукатися, але безуспішно. Будь ласка, спробуйте ще раз за хвилину."
+                },
+
+                InvalidOperationException e when e.Message == "AI_429" || (e.InnerException != null && e.InnerException.Message == "AI_429") => new ErrorDetails
+                {
+                    StatusCode = StatusCodes.Status429TooManyRequests,
+                    Message = "Ви генеруєте надто швидко! Ліміт запитів до ШІ тимчасово вичерпано. Зробіть коротку паузу."
                 },
 
                 InvalidOperationException e when e.Message.Contains("AI") || e.Message.Contains("translation") => new ErrorDetails

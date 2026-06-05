@@ -1,4 +1,6 @@
 ﻿using LexiContext.Application.Services;
+using System;
+using Xunit;
 
 namespace LexiContext.Tests.Services
 {
@@ -31,10 +33,11 @@ namespace LexiContext.Tests.Services
         }
 
         [Theory]
-        [InlineData(0, 0, 1)]
-        [InlineData(1, 1, 3)]
-        public void CalculateNextReview_ShouldSetFixedIntervals_ForFirstTwoSuccess(int currentRepetitions,
-            int currentIntervalDays, double expectedInterval)
+        [InlineData(0, 0, 4)]
+        [InlineData(1, 4, 7)]  
+        [InlineData(2, 7, 14)]
+        public void CalculateNextReview_ShouldSetFixedIntervals_ForFirstThreeSuccess(int currentRepetitions,
+            int currentIntervalDays, int expectedInterval)
         {
             // Arrange
             double currentEaseFactor = 2.5;
@@ -46,7 +49,6 @@ namespace LexiContext.Tests.Services
                 Domain.Enums.RecallQuality.Easy);
 
             // Assert
-
             Assert.Equal(currentRepetitions + 1, result.Repetitions);
             Assert.Equal(expectedInterval, result.IntervalDays);
         }
@@ -88,11 +90,11 @@ namespace LexiContext.Tests.Services
         }
 
         [Fact]
-        public void CalculateNextReview_ShouldCalculateCorrectly_AfterThirdSuccess() 
+        public void CalculateNextReview_ShouldCalculateUsingFormula_AfterThirdSuccess()
         {
             // Arrange
-            int currentRepetitions = 2;
-            int currentIntervalDays = 3;
+            int currentRepetitions = 3;
+            int currentIntervalDays = 14;
             double currentEaseFactor = 2.5;
 
             // Act
@@ -103,6 +105,7 @@ namespace LexiContext.Tests.Services
 
             // Assert
             Assert.Equal(currentRepetitions + 1, result.Repetitions);
+
             Assert.Equal((int)Math.Round(currentIntervalDays * result.EaseFactor), result.IntervalDays);
         }
     }

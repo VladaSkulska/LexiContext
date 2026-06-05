@@ -146,21 +146,24 @@ namespace LexiContext.Application.Services
         private async Task RecordUserActivityAsync(Guid userId)
         {
             var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
-
             var activity = await _activityRepository.GetByDateAsync(userId, today);
 
             if (activity == null)
             {
                 await _activityRepository.CreateAsync(new UserActivity
                 {
+                    Id = Guid.NewGuid(),
                     UserId = userId,
                     Date = today,
-                    CardsStudied = 1
+                    CardsStudied = 1,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
                 });
             }
             else
             {
                 activity.CardsStudied++;
+                activity.UpdatedAt = DateTime.UtcNow;
                 await _activityRepository.UpdateAsync(activity);
             }
         }

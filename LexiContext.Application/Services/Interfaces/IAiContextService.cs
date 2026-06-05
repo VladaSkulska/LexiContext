@@ -32,5 +32,8 @@ namespace LexiContext.Application.Services.Interfaces
             ProficiencyLevel level,
             StoryGenre genre,
             int aiNewWordsCount);
+
+        Task<string> FormatAsianWordAsync(string word, 
+            LearningLanguage learningLanguage);
     }
 }
