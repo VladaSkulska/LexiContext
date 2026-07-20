@@ -19,10 +19,22 @@ namespace LexiContext.API.Controllers
         }
         private Guid GetUserId()
         {
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                               ?? User.FindFirstValue("sub")
+                               ?? User.FindFirstValue("id")
+                               ?? User.FindFirstValue(ClaimTypes.Name);
+
             if (string.IsNullOrEmpty(userIdString))
-                throw new UnauthorizedAccessException("User ID не знайдено в токені.");
-            return Guid.Parse(userIdString);
+            {
+                throw new BadHttpRequestException("User ID не знайдено в токені. Перевірте конфігурацію клеймів.");
+            }
+
+            if (!Guid.TryParse(userIdString, out var userId))
+            {
+                throw new BadHttpRequestException("User ID у токені має неправильний формат Guid.");
+            }
+
+            return userId;
         }
 
         [HttpPost]

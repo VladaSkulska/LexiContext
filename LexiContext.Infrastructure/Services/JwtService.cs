@@ -37,7 +37,8 @@ namespace LexiContext.Infrastructure.Services
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(JwtRegisteredClaimNames.Name, user.Username)
+                new Claim(JwtRegisteredClaimNames.Name, user.Username),
+                new Claim(ClaimTypes.Role, user.Role.ToString()) 
             };
 
             var keyBytes = Encoding.UTF8.GetBytes(_clientKey);

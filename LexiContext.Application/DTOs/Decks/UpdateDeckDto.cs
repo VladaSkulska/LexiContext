@@ -6,7 +6,6 @@ namespace LexiContext.Application.DTOs.Decks
     {
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public bool IsPublic { get; set; }
 
         // ДОДАНО: Ліміти
         public int DailyNewCardsLimit { get; set; }

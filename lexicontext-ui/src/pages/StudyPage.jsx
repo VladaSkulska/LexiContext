@@ -12,9 +12,12 @@ import {
   Stack,
   Zoom,
   Divider,
+  Tooltip,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { Navbar } from "../components/common/Navbar";
 import axiosClient from "../api/axiosClient";
 import { useTranslation } from "react-i18next";
@@ -29,6 +32,28 @@ export const StudyPage = ({ isDarkMode, toggleTheme }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isFinished, setIsFinished] = useState(false);
+  
+  const [showFurigana, setShowFurigana] = useState(true);
+
+  const rubyStyle = {
+    lineHeight: showFurigana ? 1.8 : 1.5,
+    "& ruby": { 
+      rubyPosition: "over", 
+      rubyAlign: "center", 
+      mx: "1px" 
+    },
+    "& rt": { 
+      color: "primary.main", 
+      fontWeight: "500", 
+      lineHeight: 1, 
+      mb: 0, 
+      userSelect: "none", 
+      letterSpacing: "normal",
+      transition: "all 0.2s ease-in-out",
+      opacity: showFurigana ? 1 : 0,
+      fontSize: showFurigana ? "0.5em" : "0px",
+    }
+  };
 
   useEffect(() => {
     const fetchStudyCards = async () => {
@@ -158,14 +183,15 @@ export const StudyPage = ({ isDarkMode, toggleTheme }) => {
   const currentCard = cards[currentIndex];
   if (!currentCard) return null;
   const progress = ((currentIndex + 1) / cards.length) * 100;
+  
   const frontText = currentCard?.front || currentCard?.Front || "";
   const backText = currentCard?.back || currentCard?.Back || "";
-  const contextText =
-    currentCard?.generatedContext || currentCard?.GeneratedContext || "";
-  const translationText =
-    currentCard?.contextTranslation || currentCard?.ContextTranslation || "";
-  const readingText =
-    currentCard?.contextReading || currentCard?.ContextReading || "";
+  const contextText = currentCard?.generatedContext || currentCard?.GeneratedContext || "";
+  const translationText = currentCard?.contextTranslation || currentCard?.ContextTranslation || "";
+  const readingText = currentCard?.contextReading || currentCard?.ContextReading || "";
+
+  // ВИПРАВЛЕНО: Шукаємо теги всюди (і на фронті, і на беку)
+  const isAsianLanguage = frontText.includes("<ruby>") || backText.includes("<ruby>") || contextText.includes("<ruby>");
 
   return (
     <Box
@@ -194,10 +220,26 @@ export const StudyPage = ({ isDarkMode, toggleTheme }) => {
           alignItems="center"
           sx={{ mb: 3 }}
         >
-          <IconButton onClick={() => navigate(`/decks/${id}`)}>
-            <CloseIcon />
-          </IconButton>
-          <Box sx={{ width: "70%", mx: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <IconButton onClick={() => navigate(`/decks/${id}`)}>
+              <CloseIcon />
+            </IconButton>
+            
+            {isAsianLanguage && (
+              <Tooltip title={showFurigana ? t("study.hidePhonetics", "Hide Reading") : t("study.showPhonetics", "Show Reading")}>
+                <IconButton 
+                  onClick={() => setShowFurigana(!showFurigana)}
+                  color={showFurigana ? "primary" : "default"}
+                  sx={{ ml: 1, border: "1px solid", borderColor: "divider" }}
+                  size="small"
+                >
+                  {showFurigana ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" />}
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+
+          <Box sx={{ flexGrow: 1, mx: 3 }}>
             <LinearProgress
               variant="determinate"
               value={progress}
@@ -238,17 +280,17 @@ export const StudyPage = ({ isDarkMode, toggleTheme }) => {
               borderColor: "divider",
             }}
           >
+            {/* Лицьовий бік (Front) */}
             <Box
-              sx={{ backfaceVisibility: "hidden", position: "absolute", p: 3 }}
+              sx={{ backfaceVisibility: "hidden", position: "absolute", p: 3, width: "100%" }}
             >
               <Typography
                 variant="h3"
                 fontWeight="900"
                 color="primary"
-                sx={{ wordBreak: "break-word" }}
-              >
-                {frontText}
-              </Typography>
+                sx={{ wordBreak: "break-word", ...rubyStyle }}
+                dangerouslySetInnerHTML={{ __html: frontText }}
+              />
               <Typography
                 variant="body2"
                 color="text.secondary"
@@ -257,6 +299,8 @@ export const StudyPage = ({ isDarkMode, toggleTheme }) => {
                 {t("study.flipHint")}
               </Typography>
             </Box>
+
+            {/* Зворотний бік (Back) */}
             <Box
               sx={{
                 backfaceVisibility: "hidden",
@@ -266,18 +310,21 @@ export const StudyPage = ({ isDarkMode, toggleTheme }) => {
                 width: "100%",
               }}
             >
+              {/* ВИПРАВЛЕНО: Тепер backText теж рендериться як HTML з підтримкою фурігани */}
               <Typography
                 variant="h3"
                 color="secondary"
                 fontWeight="900"
-                sx={{ wordBreak: "break-word" }}
-              >
-                {backText}
-              </Typography>
+                sx={{ wordBreak: "break-word", ...rubyStyle }}
+                dangerouslySetInnerHTML={{ __html: backText }}
+              />
+              
               {contextText && (
                 <Box sx={{ mt: 4 }}>
                   <Divider sx={{ mb: 3, width: "60%", mx: "auto" }} />
-                  {readingText && (
+                  
+                  {/* ВИПРАВЛЕНО: Третій рядок (читання всього речення) показується ТІЛЬКИ якщо це не азійська мова */}
+                  {readingText && !isAsianLanguage && (
                     <Typography
                       variant="body2"
                       color="primary"
@@ -286,9 +333,12 @@ export const StudyPage = ({ isDarkMode, toggleTheme }) => {
                       {readingText}
                     </Typography>
                   )}
-                  <Typography variant="h6" sx={{ fontWeight: 500 }}>
-                    {contextText}
-                  </Typography>
+                  
+                  <Typography 
+                    variant="h6" 
+                    sx={{ fontWeight: 500, ...rubyStyle }}
+                    dangerouslySetInnerHTML={{ __html: contextText }}
+                  />
                   {translationText && (
                     <Typography
                       variant="body2"

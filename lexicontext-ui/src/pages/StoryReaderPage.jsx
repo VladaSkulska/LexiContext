@@ -26,7 +26,9 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import CheckIcon from "@mui/icons-material/Check";
-import FolderIcon from "@mui/icons-material/Folder"; 
+import FolderIcon from "@mui/icons-material/Folder";
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { Navbar } from "../components/common/Navbar";
 import { DeleteConfirmDialog } from "../components/decks/DeleteConfirmDialog.jsx";
 import axiosClient from "../api/axiosClient";
@@ -42,15 +44,52 @@ export const StoryReaderPage = ({ isDarkMode, toggleTheme }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [addedWords, setAddedWords] = useState(new Set());
   
-  // Стейти для модалки видалення
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Два незалежні стани для історії та словника
+  const [showStoryReading, setShowStoryReading] = useState(true);
+  const [showVocabReading, setShowVocabReading] = useState(true);
 
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success",
   });
+
+  // Стиль для тексту Історії
+  const rubyStoryStyle = {
+    lineHeight: showStoryReading ? 1.8 : 1.5,
+    "& ruby": { rubyPosition: "over", rubyAlign: "center", mx: "1px" },
+    "& rt": { 
+      color: "primary.main", 
+      fontWeight: "500", 
+      lineHeight: 1, 
+      mb: 0, 
+      userSelect: "none", 
+      letterSpacing: "normal",
+      transition: "all 0.2s ease-in-out",
+      opacity: showStoryReading ? 1 : 0,
+      fontSize: showStoryReading ? "0.65em" : "0px",
+    }
+  };
+
+  // Стиль для таблиці Словника
+  const rubyVocabStyle = {
+    lineHeight: showVocabReading ? 1.8 : 1.5,
+    "& ruby": { rubyPosition: "over", rubyAlign: "center", mx: "1px" },
+    "& rt": { 
+      color: "primary.main", 
+      fontWeight: "500", 
+      lineHeight: 1, 
+      mb: 0, 
+      userSelect: "none", 
+      letterSpacing: "normal",
+      transition: "all 0.2s ease-in-out",
+      opacity: showVocabReading ? 1 : 0,
+      fontSize: showVocabReading ? "0.65em" : "0px",
+    }
+  };
 
   const getGenreLabel = (genreValue) => {
     if (genreValue === null || genreValue === undefined)
@@ -99,12 +138,10 @@ export const StoryReaderPage = ({ isDarkMode, toggleTheme }) => {
     fetchStory();
   }, [id, t]);
 
-  // ЗМІНЕНО: тепер просто відкриваємо модалку
   const handleDeleteClick = () => {
     setDeleteDialogOpen(true);
   };
 
-  // ДОДАНО: функція підтвердження видалення
   const handleConfirmDelete = async () => {
     setIsDeleting(true);
     try {
@@ -117,7 +154,7 @@ export const StoryReaderPage = ({ isDarkMode, toggleTheme }) => {
         message: t("storyReader.deleteError", "Failed to delete the story."),
         severity: "error",
       });
-      setDeleteDialogOpen(false); // Закриваємо модалку при помилці
+      setDeleteDialogOpen(false); 
     } finally {
       setIsDeleting(false);
     }
@@ -125,7 +162,7 @@ export const StoryReaderPage = ({ isDarkMode, toggleTheme }) => {
 
   const handleAddCard = async (phrase) => {
     try {
-      const cleanFront = phrase.phrase.replace(/<\/?[^>]+(>|$)/g, "");
+      const cleanFront = phrase.phrase.replace(/<rt>.*?<\/rt>/gi, "").replace(/<\/?[^>]+(>|$)/g, "");
       await axiosClient.post("/Cards", {
         deckId: story.deckId,
         front: cleanFront,
@@ -147,6 +184,8 @@ export const StoryReaderPage = ({ isDarkMode, toggleTheme }) => {
       });
     }
   };
+
+  const isAsianLanguage = story?.content?.includes("<ruby>");
 
   return (
     <Box
@@ -180,7 +219,7 @@ export const StoryReaderPage = ({ isDarkMode, toggleTheme }) => {
               sx={{ maxWidth: 200, noWrap: true }}
               noWrap
             >
-              {story.title}
+              {story.title ? story.title.replace(/<rt>.*?<\/rt>/gi, "").replace(/<\/?[^>]+(>|$)/g, "") : ""}
             </Typography>
           </Breadcrumbs>
 
@@ -198,10 +237,17 @@ export const StoryReaderPage = ({ isDarkMode, toggleTheme }) => {
                 gap: 2,
               }}
             >
-              <Typography variant="h3" fontWeight="900">
-                {story.title}
-              </Typography>
-              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+              {/* ВИПРАВЛЕНО: Динамічний розмір шрифту H3 залежно від мови */}
+              <Typography 
+                variant="h3" 
+                fontWeight="900" 
+                sx={{ 
+                  ...rubyStoryStyle, 
+                  fontSize: isAsianLanguage ? { xs: "2rem", md: "3rem" } : { xs: "1.75rem", md: "2.25rem" } 
+                }}
+                dangerouslySetInnerHTML={{ __html: story.title }}
+              />
+              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
                 <Chip
                   label={getGenreLabel(story.genre)}
                   color="secondary"
@@ -222,6 +268,20 @@ export const StoryReaderPage = ({ isDarkMode, toggleTheme }) => {
                     }}
                   />
                 )}
+                
+                {/* Кнопка для тексту історії */}
+                {isAsianLanguage && (
+                  <Tooltip title={showStoryReading ? t("storyReader.hidePhonetics", "Hide Reading") : t("storyReader.showPhonetics", "Show Reading")}>
+                    <IconButton 
+                      onClick={() => setShowStoryReading(!showStoryReading)}
+                      color={showStoryReading ? "primary" : "default"}
+                      sx={{ ml: 1, border: "1px solid", borderColor: "divider" }}
+                      size="small"
+                    >
+                      {showStoryReading ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" />}
+                    </IconButton>
+                  </Tooltip>
+                )}
               </Box>
             </Box>
 
@@ -240,7 +300,7 @@ export const StoryReaderPage = ({ isDarkMode, toggleTheme }) => {
               sx={{
                 whiteSpace: "pre-wrap",
                 fontSize: "1.1rem",
-                lineHeight: 1.8,
+                ...rubyStoryStyle
               }}
               dangerouslySetInnerHTML={{ __html: story.content }}
             />
@@ -248,7 +308,7 @@ export const StoryReaderPage = ({ isDarkMode, toggleTheme }) => {
               <Button
                 color="error"
                 startIcon={<DeleteIcon />}
-                onClick={handleDeleteClick} // ЗМІНЕНО виклик функції
+                onClick={handleDeleteClick}
               >
                 {t("storyReader.deleteBtn", "Delete")}
               </Button>
@@ -257,9 +317,25 @@ export const StoryReaderPage = ({ isDarkMode, toggleTheme }) => {
 
           {story.phrases && story.phrases.length > 0 && (
             <>
-              <Typography variant="h5" fontWeight="bold" sx={{ mb: 2, mt: 6 }}>
-                {t("storyReader.vocabTitle", "Vocabulary")}
-              </Typography>
+              {/* Кнопка для словника на одному рівні із заголовком */}
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, mt: 6 }}>
+                <Typography variant="h5" fontWeight="bold">
+                  {t("storyReader.vocabTitle", "Vocabulary")}
+                </Typography>
+                {isAsianLanguage && (
+                  <Tooltip title={showVocabReading ? t("storyReader.hidePhonetics", "Hide Reading") : t("storyReader.showPhonetics", "Show Reading")}>
+                    <IconButton 
+                      onClick={() => setShowVocabReading(!showVocabReading)}
+                      color={showVocabReading ? "primary" : "default"}
+                      sx={{ border: "1px solid", borderColor: "divider" }}
+                      size="small"
+                    >
+                      {showVocabReading ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" />}
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </Box>
+
               <TableContainer
                 component={Paper}
                 elevation={0}
@@ -295,9 +371,9 @@ export const StoryReaderPage = ({ isDarkMode, toggleTheme }) => {
                     {story.phrases.map((phrase) => (
                       <TableRow key={phrase.id} hover>
                         <TableCell>
-                          <Typography fontWeight="bold" color="primary">
-                            {phrase.phrase.replace(/<\/?[^>]+(>|$)/g, "").replace(/\*\*/g, "")}
-                          </Typography>
+                          <Typography fontWeight="bold" color="primary" sx={{ ...rubyVocabStyle, fontSize: "1.2rem" }}
+                            dangerouslySetInnerHTML={{ __html: phrase.phrase.replace(/<\/?(b|i)>/gi, "") }}
+                          />
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" color="text.secondary">
@@ -340,7 +416,6 @@ export const StoryReaderPage = ({ isDarkMode, toggleTheme }) => {
         </Container>
       )}
 
-      {/* ДОДАНО: Модалка підтвердження видалення */}
       <DeleteConfirmDialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}

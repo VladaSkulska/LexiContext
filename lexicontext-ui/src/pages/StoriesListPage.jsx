@@ -77,7 +77,8 @@ export const StoriesListPage = ({ isDarkMode, toggleTheme }) => {
     >
       <Navbar isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
 
-      <Container maxWidth="lg" sx={{ mt: { xs: 2, md: 5 }, pb: 5 }}>
+      {/* ВИПРАВЛЕНО: Розширено контейнер з lg до xl */}
+      <Container maxWidth="xl" sx={{ mt: { xs: 2, md: 5 }, pb: 5 }}>
         {/* Шапка сторінки */}
         <Box
           sx={{
@@ -123,11 +124,10 @@ export const StoriesListPage = ({ isDarkMode, toggleTheme }) => {
             <Typography variant="h6">{t("stories.noStoriesTitle")}</Typography>
           </Box>
         ) : (
-          /* Сітка з центруванням */
           <Grid
             container
             spacing={3}
-            justifyContent={{ xs: "center", md: "flex-start" }}
+            justifyContent="center"
           >
             {stories.map((story) => (
               <Grid
@@ -135,6 +135,7 @@ export const StoriesListPage = ({ isDarkMode, toggleTheme }) => {
                 xs={12}
                 sm={6}
                 md={4}
+                lg={3} // ВИПРАВЛЕНО: Тепер 4 картки в ряд на великих екранах
                 key={story.id}
                 sx={{ display: "flex" }}
               >
@@ -190,22 +191,25 @@ export const StoriesListPage = ({ isDarkMode, toggleTheme }) => {
                       </Typography>
                     </Box>
 
-                    {/* Заголовок з фіксованою висотою (3 рядки) */}
-                    <Typography
-                      variant="h6"
-                      fontWeight="800"
-                      sx={{
-                        lineHeight: 1.3,
-                        minHeight: "3.9em", // Забезпечує однакову висоту блоку тексту
-                        display: "-webkit-box",
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                        color: "text.primary",
-                      }}
-                    >
-                      {story.title}
-                    </Typography>
+                    {/* Заголовок очищений від HTML-тегів фурігани та відцентрований */}
+                    <Box sx={{ minHeight: "3.9em", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Typography
+                        variant="h6"
+                        fontWeight="800"
+                        align="center"
+                        sx={{
+                          lineHeight: 1.3,
+                          display: "-webkit-box",
+                          WebkitLineClamp: 3,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                          color: "text.primary",
+                          width: "100%"
+                        }}
+                      >
+                        {story.title ? story.title.replace(/<rt>.*?<\/rt>/gi, "").replace(/<\/?[^>]+(>|$)/g, "") : ""}
+                      </Typography>
+                    </Box>
                   </CardContent>
 
                   <CardActions sx={{ p: 3, pt: 0 }}>
@@ -213,7 +217,7 @@ export const StoriesListPage = ({ isDarkMode, toggleTheme }) => {
                       fullWidth
                       variant="contained"
                       color="secondary"
-                      onClick={() => navigate(`/story/${story.id}`)}
+                      onClick={() => navigate(`/stories/${story.id}`)}
                       sx={{
                         borderRadius: 2.5,
                         textTransform: "none",

@@ -102,6 +102,9 @@ builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 
 builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
 
+builder.Services.AddScoped<IClassroomRepository, ClassroomRepository>();
+builder.Services.AddScoped<IClassroomService, ClassroomService>();
+
 builder.Services.AddScoped<ISpacedRepetitionService, SpacedRepetitionService>();
 builder.Services.AddScoped<IStudyService, StudyService>();
 builder.Services.AddScoped<IUserCardProgressRepository, UserCardProgressRepository>();
@@ -127,7 +130,16 @@ var app = builder.Build();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseRouting();
-app.UseCors("AllowReactApp");
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp",
+        policy =>
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
 
 if (app.Environment.IsDevelopment())
 {

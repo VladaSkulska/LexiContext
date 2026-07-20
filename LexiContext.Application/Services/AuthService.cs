@@ -1,6 +1,7 @@
 ﻿using LexiContext.Application.Interfaces;
 using LexiContext.Application.Interfaces.Repos;
 using LexiContext.Domain.Entities;
+using LexiContext.Domain.Enums;
 
 namespace LexiContext.Application.Services
 {
@@ -57,6 +58,28 @@ namespace LexiContext.Application.Services
             }
 
             return _jwtProvider.GenerateToken(user);
+        }
+
+        public async Task<string> UpdateUserRoleAsync(Guid userId, string roleStr)
+        {
+            // Fetch user from DB
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+            {
+                throw new Exception("User not found.");
+            }
+
+            if (Enum.TryParse<UserRole>(roleStr, true, out var parsedRole))
+            {
+                user.Role = parsedRole;
+                user.UpdatedAt = DateTime.UtcNow;
+
+                await _userRepository.UpdateAsync(user);
+
+                return _jwtProvider.GenerateToken(user);
+            }
+
+            throw new ArgumentException("Invalid role provided.");
         }
     }
 }

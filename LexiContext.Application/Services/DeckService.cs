@@ -2,6 +2,7 @@
 using LexiContext.Application.DTOs.Decks;
 using LexiContext.Application.Services.Interfaces;
 using LexiContext.Domain.Entities;
+using LexiContext.Domain.Entities.Classes; // Переконайся, що простір назв для ClassroomDeck правильний
 using LexiContext.Domain.Exceptions;
 using FluentValidation;
 using LexiContext.Application.Interfaces.Repos;
@@ -13,6 +14,7 @@ namespace LexiContext.Application.Services
         private readonly IDeckRepository _deckRepository;
         private readonly ICardRepository _cardRepository;
         private readonly IUserCardProgressRepository _progressRepository;
+        private readonly IClassroomRepository _classroomRepository;
 
         private readonly IValidator<CreateDeckDto> _createDeckValidator;
         private readonly IValidator<UpdateDeckDto> _updateDeckValidator;
@@ -21,12 +23,14 @@ namespace LexiContext.Application.Services
             IDeckRepository deckRepository,
             ICardRepository cardRepository,
             IUserCardProgressRepository progressRepository,
+            IClassroomRepository classroomRepository,
             IValidator<CreateDeckDto> createValidator,
             IValidator<UpdateDeckDto> updateDeckValidator)
         {
             _deckRepository = deckRepository;
             _cardRepository = cardRepository;
             _progressRepository = progressRepository;
+            _classroomRepository = classroomRepository;
             _createDeckValidator = createValidator;
             _updateDeckValidator = updateDeckValidator;
         }
@@ -39,15 +43,14 @@ namespace LexiContext.Application.Services
             {
                 Title = dto.Title,
                 Description = dto.Description ?? string.Empty,
-                IsPublic = dto.IsPublic,
                 TargetLanguage = dto.TargetLanguage,
                 NativeLanguage = dto.NativeLanguage,
                 ProficiencyLevel = dto.ProficiencyLevel,
                 Tone = dto.Tone,
-                // ДОДАНО: Зберігаємо ліміти
                 DailyNewCardsLimit = dto.DailyNewCardsLimit,
                 DailyReviewLimit = dto.DailyReviewLimit,
-                CreatedId = userId
+                CreatedId = userId,
+                OwnerClassroomId = dto.ClassroomId
             };
 
             var createdId = await _deckRepository.CreateAsync(deckEntity);
@@ -58,7 +61,7 @@ namespace LexiContext.Application.Services
 
         public async Task<DeckDto> GetDeckByIdAsync(Guid id, Guid userId)
         {
-            var deckEntity = await GetDeckOrThrowAsync(id, userId);
+            var deckEntity = await GetDeckForReadAsync(id, userId);
 
             var cards = await _cardRepository.GetByDeckIdAsync(deckEntity.Id);
             var progresses = await _progressRepository.GetByDeckIdAsync(userId, deckEntity.Id);
@@ -70,7 +73,7 @@ namespace LexiContext.Application.Services
 
         public async Task<List<DeckDto>> GetAllDecksAsync(Guid userId)
         {
-            var deckEntities = await _deckRepository.GetAllByUserIdAsync(userId);
+            var deckEntities = await _deckRepository.GetPersonalDecksByUserIdAsync(userId); 
             var dtos = new List<DeckDto>();
 
             foreach (var deck in deckEntities)
@@ -90,14 +93,12 @@ namespace LexiContext.Application.Services
         {
             await _updateDeckValidator.ValidateAndThrowCustomAsync(dto);
 
-            var entity = await GetDeckOrThrowAsync(id, userId);
+            var entity = await GetDeckForEditAsync(id, userId);
 
             entity.Title = dto.Title;
             entity.Description = dto.Description ?? string.Empty;
-            entity.IsPublic = dto.IsPublic;
             entity.ProficiencyLevel = dto.ProficiencyLevel;
             entity.Tone = dto.Tone;
-            // ДОДАНО: Оновлюємо ліміти
             entity.DailyNewCardsLimit = dto.DailyNewCardsLimit;
             entity.DailyReviewLimit = dto.DailyReviewLimit;
 
@@ -112,18 +113,99 @@ namespace LexiContext.Application.Services
 
         public async Task DeleteDeckAsync(Guid id, Guid userId)
         {
-            var entity = await GetDeckOrThrowAsync(id, userId);
+            var entity = await GetDeckForEditAsync(id, userId);
+
+            if (entity.OwnerClassroomId == null)
+            {
+                bool isShared = await _classroomRepository.IsDeckSharedWithAnyClassroomAsync(id);
+                if (isShared)
+                {
+                    throw new InvalidOperationException(
+                        "You cannot delete a deck that is being used in classes. First, remove it from the class materials.");
+                }
+            }
+
             await _deckRepository.DeleteAsync(entity);
         }
 
-        private async Task<Deck> GetDeckOrThrowAsync(Guid id, Guid userId)
+        private async Task<Deck> GetDeckForReadAsync(Guid id, Guid userId)
+        {
+            var deckEntity = await _deckRepository.GetByIdAsync(id);
+            if (deckEntity == null)
+                throw new NotFoundException("Deck", id);
+
+            if (deckEntity.CreatedId == userId)
+                return deckEntity;
+
+            if (deckEntity.OwnerClassroomId.HasValue)
+            {
+                var studentClassrooms = await _classroomRepository.GetStudentClassroomsAsync(userId);
+                bool isStudentInClass = studentClassrooms.Any(c => c.Id == deckEntity.OwnerClassroomId.Value);
+
+                if (isStudentInClass)
+                    return deckEntity;
+            }
+
+            var sharedStudentClassrooms = await _classroomRepository.GetStudentClassroomsAsync(userId);
+            bool hasAccessViaShared = sharedStudentClassrooms.Any(c => c.Decks != null && c.Decks.Any(d => d.DeckId == id));
+
+            if (!hasAccessViaShared)
+                throw new UnauthorizedAccessException("You do not have access to this deck.");
+
+            return deckEntity;
+        }
+
+        public async Task<DeckDto> ForkDeckAsync(Guid deckId, Guid userId)
+        {
+            var originalDeck = await GetDeckForReadAsync(deckId, userId);
+
+            // Створюємо глибоку копію колоди (Deep Copy)
+            var forkedDeck = new Deck
+            {
+                Title = $"{originalDeck.Title} (Copy)",
+                Description = originalDeck.Description ?? string.Empty,
+                TargetLanguage = originalDeck.TargetLanguage,
+                NativeLanguage = originalDeck.NativeLanguage,
+                ProficiencyLevel = originalDeck.ProficiencyLevel,
+                Tone = originalDeck.Tone,
+                DailyNewCardsLimit = originalDeck.DailyNewCardsLimit,
+                DailyReviewLimit = originalDeck.DailyReviewLimit,
+                CreatedId = userId,       // Власником стає студент
+                OwnerClassroomId = null   // Колода переходить в розряд ОСОБИСТИХ
+            };
+
+            var newDeckId = await _deckRepository.CreateAsync(forkedDeck);
+            forkedDeck.Id = newDeckId;
+
+            var originalCards = await _cardRepository.GetByDeckIdAsync(deckId);
+            foreach (var card in originalCards)
+            {
+                var clonedCard = new Card
+                {
+                    DeckId = newDeckId,
+                    Front = card.Front,
+                    Back = card.Back,
+                    GeneratedContext = card.GeneratedContext,
+                    ContextTranslation = card.ContextTranslation,
+                    ContextReading = card.ContextReading,
+                    ImageURL = card.ImageURL,
+                    AdditionalMetadata = card.AdditionalMetadata,
+                    IsSimplified = card.IsSimplified
+                }; 
+                await _cardRepository.CreateAsync(clonedCard);
+            }
+
+            return MapToDeckDto(forkedDeck, originalCards.Count, 0, 0);
+        }
+
+        private async Task<Deck> GetDeckForEditAsync(Guid id, Guid userId)
         {
             var deckEntity = await _deckRepository.GetByIdAsync(id);
             if (deckEntity == null)
                 throw new NotFoundException("Deck", id);
 
             if (deckEntity.CreatedId != userId)
-                throw new UnauthorizedAccessException("You don't have access to this deck.");
+                throw new UnauthorizedAccessException("Only the owner can edit or delete this deck.");
 
             return deckEntity;
         }
@@ -146,16 +228,15 @@ namespace LexiContext.Application.Services
                 Id = deck.Id,
                 Title = deck.Title,
                 Description = deck.Description ?? string.Empty,
-                IsPublic = deck.IsPublic,
+                ShareCode = deck.ShareCode,
                 CreatedAt = deck.CreatedAt,
+                CreatedId = deck.CreatedId,
                 TargetLanguage = deck.TargetLanguage,
                 NativeLanguage = deck.NativeLanguage,
                 ProficiencyLevel = deck.ProficiencyLevel,
                 Tone = deck.Tone,
-
                 DailyNewCardsLimit = deck.DailyNewCardsLimit,
                 DailyReviewLimit = deck.DailyReviewLimit,
-
                 NewCards = newCards,
                 LearningCards = learningCards,
                 ToReview = toReview

@@ -23,6 +23,7 @@ namespace LexiContext.Tests.Services
         private readonly Mock<IValidator<CreateCardDto>> _createValidatorMock;
         private readonly Mock<IValidator<UpdateCardDto>> _updateValidatorMock;
         private readonly Mock<ILogger<CardService>> _loggerMock;
+        private readonly Mock<IClassroomRepository> _classroomRepoMock;
 
         // Додаємо моки для нових залежностей (прогрес та алгоритм повторень)
         private readonly Mock<IUserCardProgressRepository> _progressRepoMock;
@@ -38,6 +39,7 @@ namespace LexiContext.Tests.Services
             _aiServiceMock = new Mock<IAiContextService>();
             _createValidatorMock = new Mock<IValidator<CreateCardDto>>();
             _updateValidatorMock = new Mock<IValidator<UpdateCardDto>>();
+            _classroomRepoMock = new Mock<IClassroomRepository>();
             _loggerMock = new Mock<ILogger<CardService>>();
 
             // Ініціалізуємо нові моки
@@ -58,7 +60,8 @@ namespace LexiContext.Tests.Services
                 _updateValidatorMock.Object,    // 5-й
                 _createValidatorMock.Object,    // 6-й
                 _aiServiceMock.Object,          // 7-й
-                _loggerMock.Object              // 8-й
+                _loggerMock.Object,              // 8-й
+                _classroomRepoMock.Object
             );
         }
 

@@ -1,4 +1,5 @@
 ﻿using LexiContext.Domain.Entities.Common;
+using LexiContext.Domain.Enums;
 
 namespace LexiContext.Domain.Entities
 {
@@ -10,6 +11,7 @@ namespace LexiContext.Domain.Entities
         // OAuth
         public string AuthProvider { get; set; } = string.Empty;
         public string ExternalProviderId { get; set; } = string.Empty;
+        public UserRole Role { get; set; } = UserRole.Student;
 
         // gamification
         public int CurrentStreak { get; set; }

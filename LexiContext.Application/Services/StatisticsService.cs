@@ -25,5 +25,9 @@ namespace LexiContext.Application.Services
         {
             return await _statisticsRepo.GetActivityHistoryAsync(userId);
         }
+        public async Task<int> GetClassroomAverageProgressAsync(Guid classroomId)
+        {
+            return await _statisticsRepo.GetClassroomAverageProgressAsync(classroomId);
+        }
     }
 }

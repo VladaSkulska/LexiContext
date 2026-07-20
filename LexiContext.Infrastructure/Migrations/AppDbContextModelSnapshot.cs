@@ -70,6 +70,126 @@ namespace LexiContext.Infrastructure.Migrations
                     b.ToTable("Cards");
                 });
 
+            modelBuilder.Entity("LexiContext.Domain.Entities.Classes.Classroom", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("JoinCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("TeacherId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TeacherId");
+
+                    b.ToTable("Classrooms");
+                });
+
+            modelBuilder.Entity("LexiContext.Domain.Entities.Classes.ClassroomDeck", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ClassroomId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DeckId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClassroomId");
+
+                    b.HasIndex("DeckId");
+
+                    b.ToTable("ClassroomDecks");
+                });
+
+            modelBuilder.Entity("LexiContext.Domain.Entities.Classes.ClassroomStudent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ClassroomId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClassroomId");
+
+                    b.HasIndex("StudentId");
+
+                    b.ToTable("ClassroomStudents");
+                });
+
+            modelBuilder.Entity("LexiContext.Domain.Entities.Classes.StudentHomework", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ClassroomId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("GroupTaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TaskText")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("StudentHomeworks");
+                });
+
             modelBuilder.Entity("LexiContext.Domain.Entities.Deck", b =>
                 {
                     b.Property<Guid>("Id")
@@ -92,14 +212,17 @@ namespace LexiContext.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<bool>("IsPublic")
-                        .HasColumnType("boolean");
-
                     b.Property<int>("NativeLanguage")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("OwnerClassroomId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("ProficiencyLevel")
                         .HasColumnType("integer");
+
+                    b.Property<string>("ShareCode")
+                        .HasColumnType("text");
 
                     b.Property<int>("TargetLanguage")
                         .HasColumnType("integer");
@@ -117,6 +240,8 @@ namespace LexiContext.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedId");
+
+                    b.HasIndex("OwnerClassroomId");
 
                     b.ToTable("Decks");
                 });
@@ -223,6 +348,9 @@ namespace LexiContext.Infrastructure.Migrations
                     b.Property<DateTime?>("LastStudyDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -239,11 +367,12 @@ namespace LexiContext.Infrastructure.Migrations
                         {
                             Id = new Guid("00000000-0000-0000-0000-000000000001"),
                             AuthProvider = "System",
-                            CreatedAt = new DateTime(2026, 3, 18, 18, 54, 54, 928, DateTimeKind.Utc).AddTicks(7750),
+                            CreatedAt = new DateTime(2026, 7, 13, 16, 9, 49, 755, DateTimeKind.Utc).AddTicks(2793),
                             CurrentStreak = 0,
                             Email = "student@fpm.kpi.ua",
                             ExternalProviderId = "sys-001",
-                            UpdatedAt = new DateTime(2026, 3, 18, 18, 54, 54, 928, DateTimeKind.Utc).AddTicks(7751),
+                            Role = 1,
+                            UpdatedAt = new DateTime(2026, 7, 13, 16, 9, 49, 755, DateTimeKind.Utc).AddTicks(2794),
                             Username = "DevStudent_KPI"
                         });
                 });
@@ -361,6 +490,55 @@ namespace LexiContext.Infrastructure.Migrations
                     b.Navigation("Deck");
                 });
 
+            modelBuilder.Entity("LexiContext.Domain.Entities.Classes.Classroom", b =>
+                {
+                    b.HasOne("LexiContext.Domain.Entities.User", "Teacher")
+                        .WithMany()
+                        .HasForeignKey("TeacherId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Teacher");
+                });
+
+            modelBuilder.Entity("LexiContext.Domain.Entities.Classes.ClassroomDeck", b =>
+                {
+                    b.HasOne("LexiContext.Domain.Entities.Classes.Classroom", "Classroom")
+                        .WithMany("Decks")
+                        .HasForeignKey("ClassroomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LexiContext.Domain.Entities.Deck", "Deck")
+                        .WithMany()
+                        .HasForeignKey("DeckId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Classroom");
+
+                    b.Navigation("Deck");
+                });
+
+            modelBuilder.Entity("LexiContext.Domain.Entities.Classes.ClassroomStudent", b =>
+                {
+                    b.HasOne("LexiContext.Domain.Entities.Classes.Classroom", "Classroom")
+                        .WithMany("Students")
+                        .HasForeignKey("ClassroomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LexiContext.Domain.Entities.User", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Classroom");
+
+                    b.Navigation("Student");
+                });
+
             modelBuilder.Entity("LexiContext.Domain.Entities.Deck", b =>
                 {
                     b.HasOne("LexiContext.Domain.Entities.User", "Creater")
@@ -368,6 +546,11 @@ namespace LexiContext.Infrastructure.Migrations
                         .HasForeignKey("CreatedId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("LexiContext.Domain.Entities.Classes.Classroom", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerClassroomId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Creater");
                 });
@@ -439,6 +622,13 @@ namespace LexiContext.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("LexiContext.Domain.Entities.Classes.Classroom", b =>
+                {
+                    b.Navigation("Decks");
+
+                    b.Navigation("Students");
                 });
 
             modelBuilder.Entity("LexiContext.Domain.Entities.Deck", b =>

@@ -167,10 +167,10 @@ namespace LexiContext.Application.Services
         {
             return level switch
             {
-                ProficiencyLevel.Beginner => 15,
-                ProficiencyLevel.Intermediate => 12,
-                ProficiencyLevel.Advanced => 8,
-                _ => 15
+                ProficiencyLevel.Beginner => 13,
+                ProficiencyLevel.Intermediate => 10,
+                ProficiencyLevel.Advanced => 7,
+                _ => 13
             };
         }
     }

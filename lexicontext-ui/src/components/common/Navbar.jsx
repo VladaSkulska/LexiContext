@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   AppBar,
   Box,
@@ -12,15 +12,38 @@ import {
   Menu,
   MenuItem,
   Divider,
+  Tooltip, // <-- ДОДАНО СЮДИ
 } from "@mui/material";
-import { DarkMode, LightMode, Menu as MenuIcon } from "@mui/icons-material";
+import { DarkMode, LightMode, Menu as MenuIcon, SwapHoriz } from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import axiosClient from "../../api/axiosClient";
 
-// 1. ВИНОСИМО КОМПОНЕНТ ЗА МЕЖІ NAVBAR
-const NavButton = ({ to, labelKey, t, location, navigate }) => {
-  const isActive = location.pathname === to;
+const parseJwt = (token) => {
+  try {
+    const base64Url = token.split(".")[1];
+    if (!base64Url) return null;
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      window
+        .atob(base64)
+        .split("")
+        .map(function (c) {
+          return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join("")
+    );
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error("Помилка парсингу токена:", error);
+    return null;
+  }
+};
+
+const NavButton = ({ to, labelKey, t, location, navigate, overrideActivePath }) => {
+  const currentPath = overrideActivePath || location.pathname;
+  const isActive = currentPath === to || currentPath.startsWith(`${to}/`);
+  
   return (
     <Button
       color="inherit"
@@ -42,13 +65,37 @@ const NavButton = ({ to, labelKey, t, location, navigate }) => {
   );
 };
 
-export const Navbar = ({ isDarkMode, toggleTheme }) => {
+export const Navbar = ({ isDarkMode, toggleTheme, overrideActivePath }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation();
 
+  const [userRole, setUserRole] = useState("Student");
+  const [userName, setUserName] = useState("User");
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = useState(null);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const decoded = parseJwt(token);
+      if (decoded) {
+        const role =
+          decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ||
+          decoded.role ||
+          decoded.Role ||
+          "Student";
+        const name =
+          decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
+          decoded.unique_name ||
+          decoded.name ||
+          "User";
+          
+        setUserRole(role);
+        setUserName(name);
+      }
+    }
+  }, []);
 
   const handleMobileMenuOpen = (event) => {
     setMobileMoreAnchorEl(event.currentTarget);
@@ -63,8 +110,21 @@ export const Navbar = ({ isDarkMode, toggleTheme }) => {
     navigate("/login");
   };
 
+  const handleSwitchRole = async () => {
+    const newRole = userRole === "Teacher" ? "Student" : "Teacher";
+    try {
+      const response = await axiosClient.post("/Auth/role", JSON.stringify(newRole), {
+        headers: { "Content-Type": "application/json" },
+      });
+      localStorage.setItem("token", response.data.token);
+      window.location.href = "/classrooms";
+    } catch (error) {
+      console.error("Помилка зміни ролі", error);
+    }
+  };
+
   const handleLanguageChange = async (event, newLang) => {
-    if (newLang !== null) {
+    if (newLang !== null && newLang !== i18n.language.substring(0, 2)) {
       i18n.changeLanguage(newLang);
       try {
         const langCode = newLang === "uk" ? 2 : 1;
@@ -96,6 +156,8 @@ export const Navbar = ({ isDarkMode, toggleTheme }) => {
     }
   };
 
+  const currentPath = overrideActivePath || location.pathname;
+
   const renderMobileMenu = (
     <Menu
       anchorEl={mobileMoreAnchorEl}
@@ -112,44 +174,64 @@ export const Navbar = ({ isDarkMode, toggleTheme }) => {
           navigate("/decks");
           handleMobileMenuClose();
         }}
-        selected={location.pathname === "/decks"}
+        selected={currentPath === "/decks" || currentPath.startsWith("/decks/")}
         sx={{ py: 1.5 }}
       >
-        <Typography
-          fontWeight={location.pathname === "/decks" ? "bold" : "normal"}
-        >
+        <Typography fontWeight={currentPath.startsWith("/decks") ? "bold" : "normal"}>
           {t("navbar.myDecks")}
         </Typography>
       </MenuItem>
+
+      <MenuItem
+        onClick={() => {
+          navigate("/classrooms");
+          handleMobileMenuClose();
+        }}
+        selected={currentPath.startsWith("/classrooms")}
+        sx={{ py: 1.5 }}
+      >
+        <Typography fontWeight={currentPath.startsWith("/classrooms") ? "bold" : "normal"}>
+          {t("navbar.classrooms")}
+        </Typography>
+      </MenuItem>
+
       <MenuItem
         onClick={() => {
           navigate("/stories");
           handleMobileMenuClose();
         }}
-        selected={location.pathname === "/stories"}
+        selected={currentPath === "/stories"}
         sx={{ py: 1.5 }}
       >
-        <Typography
-          fontWeight={location.pathname === "/stories" ? "bold" : "normal"}
-        >
+        <Typography fontWeight={currentPath === "/stories" ? "bold" : "normal"}>
           {t("navbar.stories")}
         </Typography>
       </MenuItem>
+      
       <MenuItem
         onClick={() => {
           navigate("/statistics");
           handleMobileMenuClose();
         }}
-        selected={location.pathname === "/statistics"}
+        selected={currentPath === "/statistics"}
         sx={{ py: 1.5 }}
       >
-        <Typography
-          fontWeight={location.pathname === "/statistics" ? "bold" : "normal"}
-        >
+        <Typography fontWeight={currentPath === "/statistics" ? "bold" : "normal"}>
           {t("navbar.statistics")}
         </Typography>
       </MenuItem>
+
       <Divider sx={{ my: 1 }} />
+
+      <MenuItem onClick={handleSwitchRole}>
+        <Typography fontWeight="bold" color="secondary.main" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <SwapHoriz fontSize="small" />
+          {userRole === "Teacher" ? t("navbar.teacherMode") : t("navbar.studentMode")}
+        </Typography>
+      </MenuItem>
+
+      <Divider sx={{ my: 1 }} />
+
       <Box sx={{ px: 2, py: 1 }}>
         <ToggleButtonGroup
           value={i18n.language?.substring(0, 2) || "uk"}
@@ -159,12 +241,8 @@ export const Navbar = ({ isDarkMode, toggleTheme }) => {
           fullWidth
           color="primary"
         >
-          <ToggleButton value="uk" sx={{ fontWeight: "bold" }}>
-            UK
-          </ToggleButton>
-          <ToggleButton value="en" sx={{ fontWeight: "bold" }}>
-            EN
-          </ToggleButton>
+          <ToggleButton value="uk" sx={{ fontWeight: "bold" }}>UK</ToggleButton>
+          <ToggleButton value="en" sx={{ fontWeight: "bold" }}>EN</ToggleButton>
         </ToggleButtonGroup>
       </Box>
       <Divider sx={{ my: 1 }} />
@@ -208,35 +286,27 @@ export const Navbar = ({ isDarkMode, toggleTheme }) => {
               LexiContext
             </Typography>
 
-            {/* ТЕПЕР ПЕРЕДАЄМО ПАРАМЕТРИ В NAVBUTTON */}
             <Box sx={{ display: { xs: "none", md: "flex" }, gap: 1 }}>
-              <NavButton
-                to="/decks"
-                labelKey="navbar.myDecks"
-                t={t}
-                location={location}
-                navigate={navigate}
-              />
-              <NavButton
-                to="/stories"
-                labelKey="navbar.stories"
-                t={t}
-                location={location}
-                navigate={navigate}
-              />
-              <NavButton
-                to="/statistics"
-                labelKey="navbar.statistics"
-                t={t}
-                location={location}
-                navigate={navigate}
-              />
+              <NavButton to="/decks" labelKey="navbar.myDecks" t={t} location={location} navigate={navigate} overrideActivePath={overrideActivePath} />
+              <NavButton to="/classrooms" labelKey="navbar.classrooms" t={t} location={location} navigate={navigate} overrideActivePath={overrideActivePath} />
+              <NavButton to="/stories" labelKey="navbar.stories" t={t} location={location} navigate={navigate} overrideActivePath={overrideActivePath} />
+              <NavButton to="/statistics" labelKey="navbar.statistics" t={t} location={location} navigate={navigate} overrideActivePath={overrideActivePath} />
             </Box>
           </Box>
 
-          <Box
-            sx={{ display: { xs: "none", md: "flex" }, alignItems: "center" }}
-          >
+          <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center" }}>
+            <Tooltip title={userRole === "Teacher" ? t("navbar.switchToStudent") : t("navbar.switchToTeacher")}>
+              <Button
+                variant="contained"
+                color={userRole === "Teacher" ? "secondary" : "primary"}
+                onClick={handleSwitchRole}
+                endIcon={<SwapHoriz />}
+                sx={{ mr: 2, borderRadius: 2, textTransform: "none", fontWeight: "bold" }}
+              >
+                {userRole === "Teacher" ? t("navbar.teacherMode") : t("navbar.studentMode")}
+              </Button>
+            </Tooltip>
+
             <ToggleButtonGroup
               value={i18n.language?.substring(0, 2) || "uk"}
               exclusive
@@ -244,16 +314,10 @@ export const Navbar = ({ isDarkMode, toggleTheme }) => {
               size="small"
               sx={{ mr: 3, bgcolor: "rgba(255,255,255,0.1)", borderRadius: 2 }}
             >
-              <ToggleButton
-                value="uk"
-                sx={{ color: "white", px: 1.5, py: 0.5, border: "none" }}
-              >
+              <ToggleButton value="uk" sx={{ color: "white", px: 1.5, py: 0.5, border: "none" }}>
                 UK
               </ToggleButton>
-              <ToggleButton
-                value="en"
-                sx={{ color: "white", px: 1.5, py: 0.5, border: "none" }}
-              >
+              <ToggleButton value="en" sx={{ color: "white", px: 1.5, py: 0.5, border: "none" }}>
                 EN
               </ToggleButton>
             </ToggleButtonGroup>
@@ -287,10 +351,10 @@ export const Navbar = ({ isDarkMode, toggleTheme }) => {
                   fontWeight: "bold",
                 }}
               >
-                V
+                {userName ? userName.charAt(0).toUpperCase() : "U"}
               </Avatar>
               <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                Vlada
+                {userName}
               </Typography>
             </Box>
 
@@ -315,30 +379,15 @@ export const Navbar = ({ isDarkMode, toggleTheme }) => {
             </Button>
           </Box>
 
-          <Box
-            sx={{
-              display: { xs: "flex", md: "none" },
-              alignItems: "center",
-              gap: 1,
-            }}
-          >
+          <Box sx={{ display: { xs: "flex", md: "none" }, alignItems: "center", gap: 1 }}>
             <IconButton
               color="inherit"
               onClick={handleThemeToggle}
               sx={{ bgcolor: "rgba(255,255,255,0.05)" }}
             >
-              {isDarkMode ? (
-                <LightMode fontSize="small" />
-              ) : (
-                <DarkMode fontSize="small" />
-              )}
+              {isDarkMode ? <LightMode fontSize="small" /> : <DarkMode fontSize="small" />}
             </IconButton>
-            <IconButton
-              color="inherit"
-              edge="end"
-              onClick={handleMobileMenuOpen}
-              sx={{ ml: 1 }}
-            >
+            <IconButton color="inherit" edge="end" onClick={handleMobileMenuOpen} sx={{ ml: 1 }}>
               <MenuIcon />
             </IconButton>
           </Box>

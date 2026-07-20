@@ -67,5 +67,13 @@ namespace LexiContext.API.Controllers
             await _deckService.DeleteDeckAsync(id, userId);
             return NoContent();
         }
+
+        [HttpPost("{id}/fork")]
+        public async Task<IActionResult> ForkDeck(Guid id)
+        {
+            var userId = GetUserId();
+            var result = await _deckService.ForkDeckAsync(id, userId);
+            return Ok(result);
+        }
     }
 }

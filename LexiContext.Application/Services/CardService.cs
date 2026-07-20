@@ -21,6 +21,7 @@ namespace LexiContext.Application.Services
         private readonly ILogger<CardService> _logger;
         private readonly IValidator<CreateCardDto> _createCardValidator;
         private readonly IValidator<UpdateCardDto> _updateCardValidator;
+        private readonly IClassroomRepository _classroomRepository;
 
         public CardService(ICardRepository cardRepository,
             IDeckRepository deckRepository,
@@ -29,7 +30,8 @@ namespace LexiContext.Application.Services
             IValidator<UpdateCardDto> updateCardValidator,
             IValidator<CreateCardDto> createCardValidator,
             IAiContextService aiContextService,
-            ILogger<CardService> logger)
+            ILogger<CardService> logger,
+            IClassroomRepository classroomRepository)
         {
             _cardRepository = cardRepository;
             _deckRepository = deckRepository;
@@ -39,21 +41,15 @@ namespace LexiContext.Application.Services
             _createCardValidator = createCardValidator;
             _aiContextService = aiContextService;
             _logger = logger;
+            _classroomRepository = classroomRepository;
         }
 
         public async Task<CardDto> CreateCardAsync(CreateCardDto dto, Guid userId)
         {
             await _createCardValidator.ValidateAndThrowCustomAsync(dto);
-            var deck = await GetDeckOrThrowAsync(dto.DeckId, userId);
+            var deck = await GetDeckOrThrowAsync(dto.DeckId, userId, strictOwnerCheck: true);
 
             var cleanFront = CleanString(dto.Front);
-
-            if (!dto.GenerateAiContext && (deck.TargetLanguage == LearningLanguage.Chinese || deck.TargetLanguage == LearningLanguage.Japanese))
-            {
-                cleanFront = await _aiContextService.FormatAsianWordAsync(cleanFront, deck.TargetLanguage);
-            }
-            // ================================================
-
             var exists = await _cardRepository.ExistsAsync(dto.DeckId, cleanFront.ToLower());
             if (exists)
             {
@@ -76,7 +72,7 @@ namespace LexiContext.Application.Services
             await ProcessAiGenerationAsync(card, deck, dto.GenerateAiContext);
 
             if (string.IsNullOrWhiteSpace(card.Back))
-                throw new Domain.Exceptions.ValidationException("Translation (Back) cannot be empty. Please provide a translation.");
+                throw new Domain.Exceptions.ValidationException("Translation (Back) cannot be empty.");
 
             card.Id = await _cardRepository.CreateAsync(card);
             return MapToCardDto(card);
@@ -90,7 +86,8 @@ namespace LexiContext.Application.Services
 
         public async Task<List<CardDto>> GetCardsByDeckIdAsync(Guid deckId, Guid userId)
         {
-            await GetDeckOrThrowAsync(deckId, userId);
+            await GetDeckOrThrowAsync(deckId, userId, strictOwnerCheck: false);
+
             var cards = await _cardRepository.GetByDeckIdAsync(deckId);
             return cards.Select(MapToCardDto).ToList();
         }
@@ -191,14 +188,6 @@ namespace LexiContext.Application.Services
             var deck = await GetDeckOrThrowAsync(existingCard.DeckId, userId);
 
             var cleanFront = CleanString(dto.Front);
-
-            if (!dto.GenerateAiContext && (deck.TargetLanguage == LearningLanguage.Chinese || deck.TargetLanguage == LearningLanguage.Japanese))
-            {
-                if (existingCard.Front != cleanFront)
-                {
-                    cleanFront = await _aiContextService.FormatAsianWordAsync(cleanFront, deck.TargetLanguage);
-                }
-            }
 
             if (existingCard.Front.ToLower() != cleanFront.ToLower())
             {
@@ -306,7 +295,7 @@ namespace LexiContext.Application.Services
                         nativeLanguage: deck.NativeLanguage
                     );
 
-                    var parts = rawTranslationResult.Split(new[] { " - " }, 2, StringSplitOptions.TrimEntries);
+                    var parts = rawTranslationResult.Split('-', 2, StringSplitOptions.TrimEntries);
 
                     if (parts.Length == 2)
                     {
@@ -326,13 +315,25 @@ namespace LexiContext.Application.Services
             }
         }
 
-        private async Task<Deck> GetDeckOrThrowAsync(Guid deckId, Guid userId)
+        private async Task<Deck> GetDeckOrThrowAsync(Guid deckId, Guid userId, bool strictOwnerCheck = true)
         {
             var deck = await _deckRepository.GetByIdAsync(deckId)
                 ?? throw new NotFoundException("Deck", deckId);
 
-            if (deck.CreatedId != userId)
-                throw new UnauthorizedAccessException("You do not have access to this Deck.");
+            if (deck.CreatedId == userId)
+                return deck;
+
+            if (strictOwnerCheck)
+            {
+                throw new ForbiddenException("You do not own this deck. Editing is not allowed.");
+            }
+
+            bool hasClassroomAccess = await _classroomRepository.HasStudentAccessToDeckAsync(deckId, userId);
+
+            if (!hasClassroomAccess)
+            {
+                throw new ForbiddenException("You do not have access to this deck. It is not in your classrooms.");
+            }
 
             return deck;
         }

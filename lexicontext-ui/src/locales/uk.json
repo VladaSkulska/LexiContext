@@ -6,14 +6,21 @@
     "generating": "Генерація...",
     "save": "Зберегти",
     "saving": "Збереження...",
-    "read": "Читати"
+    "read": "Читати",
+    "copied": "Скопійовано!",
+    "clickToCopy": "Натисніть, щоб скопіювати"
   },
   "navbar": {
-    "myDecks": "Мої колоди",
-    "stories": "Історії",
-    "statistics": "Статистика",
-    "logout": "Вийти"
-  },
+  "myDecks": "Мої колоди",
+  "classrooms": "Класи",
+  "stories": "Історії",
+  "statistics": "Статистика",
+  "logout": "Вийти",
+  "switchToStudent": "Перейти в режим Студента",
+  "switchToTeacher": "Перейти в режим Викладача",
+  "studentMode": "Режим Студента",
+  "teacherMode": "Режим Викладача"
+},
   "statistics": {
     "title": "Статистика навчання",
     "activity": {
@@ -38,12 +45,8 @@
       "en": "Англійська (English)",
       "uk": "Українська (Ukrainian)",
       "de": "Німецька (German)",
-      "pl": "Польська (Polish)",
-      "es": "Іспанська (Spanish)",
       "fr": "Французька (French)",
-      "it": "Італійська (Italian)",
-      "zh": "Китайська (Chinese)",
-      "ja": "Японська (Japanese)"
+      "es": "Іспанська (Spanish)"
     },
     "proficiency": {
       "beginner": "Початковий (A1-A2)",
@@ -126,6 +129,7 @@
     "btnStudy": "Вчити",
     "btnStory": "Історія",
     "btnAddCard": "Картка",
+    "btnAddToClass": "Додати до класу",
     "cardsCount": "Картки у колоді ({{count}})",
     "tableFront": "Оригінал",
     "tableBack": "Переклад",
@@ -136,7 +140,8 @@
     "tooltipClear": "Видалити речення",
     "tooltipDelete": "Видалити картку",
     "empty": "Колода порожня.",
-    "mastered": "Засвоєно (Mastered)"
+    "mastered": "Засвоєно (Mastered)",
+    "inClassroom": "Матеріал з класу"
   },
   "modals": {
     "createDeck": {
@@ -198,5 +203,53 @@
       "timeout": "Час очікування відповіді вичерпано. ШІ думає занадто довго.",
       "unknown": "Сталася помилка. Спробуйте пізніше."
     }
+  },
+  "classrooms": {
+    "titleTeacher": "Мої Класи",
+    "titleStudent": "Моє Навчання",
+    "placeholderTeacher": "Назва нового класу...",
+    "placeholderStudent": "Введіть код...",
+    "btnCreate": "Створити",
+    "btnJoin": "Приєднатися",
+    "emptyTeacher": "Ви ще не створили жодного класу.",
+    "emptyStudent": "Ви ще не приєдналися до жодного класу.",
+    "codeLabel": "Код:",
+    "studentsCount": "Студентів:",
+    "decksCount": "Колод:",
+    "errors": {
+    "notFound": "Клас з таким кодом не знайдено. Перевірте код.",
+    "alreadyJoined": "Ви вже приєднані до цього класу.",
+    "teacherConflict": "Викладач не може бути студентом у власному класі."
+}
+  },
+  "classroomDetails": {
+    "loading": "Завантаження...",
+    "notFound": "Клас не знайдено",
+    "confirmRemoveDeck": "Ви впевнені, що хочете прибрати цю колоду з класу?",
+    "confirmDeleteClass": "Ви впевнені, що хочете видалити цей клас?",
+    "successDelete": "Клас успішно видалено",
+    "errorDelete": "Помилка видалення класу",
+    "confirmLeaveClass": "Ви впевнені, що хочете вийти з класу?",
+    "successLeave": "Ви успішно вийшли з класу",
+    "errorLeave": "Помилка виходу з класу",
+    "back": "Назад",
+    "deleteClass": "Видалити клас",
+    "createDeck": "Створити колоду",
+    "leaveClass": "Вийти з класу",
+    "overview": "Огляд класу",
+    "students": "Студентів",
+    "decks": "Колод",
+    "progress": "Середній прогрес класу",
+    "materials": "Матеріали класу",
+    "noDecks": "У цьому класі ще немає колод.",
+    "removeFromClass": "Прибрати з класу",
+    "homework": "Домашнє завдання / Завдання",
+    "hwPlaceholder": "Нове завдання...",
+    "add": "Додати",
+    "created": "Створено:",
+    "noTasks": "Немає активних завдань",
+    "addDeckSuccess": "Колоду успішно додано до класу!",
+    "selectClass": "Виберіть клас",
+    "confirmDeleteTask": "Ви дійсно хочете видалити це завдання?"
   }
 }

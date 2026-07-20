@@ -6,7 +6,6 @@ using LexiContext.Application.Services.Interfaces;
 using LexiContext.Domain.Entities;
 using LexiContext.Domain.Exceptions;
 using Moq;
-using Xunit;
 
 namespace LexiContext.Tests.Services
 {
@@ -19,6 +18,7 @@ namespace LexiContext.Tests.Services
         private readonly Mock<IValidator<CreateDeckDto>> _createDeckValidatorMock;
         private readonly Mock<IValidator<UpdateDeckDto>> _updateDeckValidatorMock;
         private readonly IDeckService _deckService;
+        private readonly Mock<IClassroomRepository> _classroomRepositoryMock;
 
         private readonly Guid _testUserId = Guid.NewGuid();
 
@@ -28,13 +28,17 @@ namespace LexiContext.Tests.Services
             _cardRepositoryMock = new Mock<ICardRepository>();
             _progressRepositoryMock = new Mock<IUserCardProgressRepository>();
 
+            _classroomRepositoryMock = new Mock<IClassroomRepository>();
+
             _createDeckValidatorMock = new Mock<IValidator<CreateDeckDto>>();
             _updateDeckValidatorMock = new Mock<IValidator<UpdateDeckDto>>();
+
 
             _deckService = new DeckService(
                 _deckRepositoryMock.Object,
                 _cardRepositoryMock.Object,
                 _progressRepositoryMock.Object,
+                _classroomRepositoryMock.Object,
                 _createDeckValidatorMock.Object,
                 _updateDeckValidatorMock.Object);
         }
@@ -46,7 +50,6 @@ namespace LexiContext.Tests.Services
             {
                 Title = "Sample Deck",
                 Description = "A sample deck for testing",
-                IsPublic = true,
                 TargetLanguage = Domain.Enums.LearningLanguage.Spanish,
                 NativeLanguage = Domain.Enums.LearningLanguage.English
             };
@@ -123,7 +126,7 @@ namespace LexiContext.Tests.Services
                 CreatedId = _testUserId
             };
 
-            var updateDto = new UpdateDeckDto { Title = "New Title", IsPublic = true };
+            var updateDto = new UpdateDeckDto { Title = "New Title" };
 
             _updateDeckValidatorMock
                 .Setup(v => v.ValidateAsync(updateDto, default))

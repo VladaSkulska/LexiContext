@@ -5,8 +5,6 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  Switch,
-  FormControlLabel,
   Box,
   Divider,
   Alert,
@@ -19,7 +17,7 @@ import { BasicInfoSection } from "./sections/BasicInfoSection";
 import { LimitsSection } from "./sections/LimitsSection";
 import { AiSettingsSection } from "./sections/AiSettingsSection";
 
-export const CreateDeckModal = ({ open, onClose, onSubmit, isSaving }) => {
+export const CreateDeckModal = ({ open, onClose, onSubmit, isSaving, limitLanguages, classroomId = null }) => {
   const { t } = useTranslation();
 
   const [formData, setFormData] = useState({
@@ -29,7 +27,7 @@ export const CreateDeckModal = ({ open, onClose, onSubmit, isSaving }) => {
     nativeLanguage: 1,
     proficiencyLevel: 0,
     tone: 0,
-    isPublic: false,
+    isPublic: false, // Залишаємо для сумісності з DTO бекенду, але в UI цього більше нема
     dailyNewCardsLimit: 20,
     dailyReviewLimit: 50,
   });
@@ -60,7 +58,7 @@ export const CreateDeckModal = ({ open, onClose, onSubmit, isSaving }) => {
     setServerError("");
 
     try {
-      await onSubmit(formData);
+      await onSubmit({ ...formData, classroomId });
     } catch (err) {
       setServerError(extractErrorMessage(err));
     }
@@ -111,6 +109,7 @@ export const CreateDeckModal = ({ open, onClose, onSubmit, isSaving }) => {
           handleChange={handleChange}
           isSaving={isSaving}
           validationError={validationError}
+          limitLanguages={limitLanguages}
         />
 
         <Divider sx={{ my: 4 }} />
@@ -126,25 +125,6 @@ export const CreateDeckModal = ({ open, onClose, onSubmit, isSaving }) => {
           handleChange={handleChange}
           isSaving={isSaving}
         />
-
-        <Box sx={{ mt: 3, px: 1 }}>
-          <FormControlLabel
-            control={
-              <Switch
-                name="isPublic"
-                checked={formData.isPublic}
-                onChange={handleChange}
-                color="primary"
-                disabled={isSaving}
-              />
-            }
-            label={
-              <Typography fontWeight="500">
-                {t("modals.createDeck.makePublic")}
-              </Typography>
-            }
-          />
-        </Box>
       </DialogContent>
 
       <DialogActions sx={{ p: 3, pt: 1 }}>

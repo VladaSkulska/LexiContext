@@ -6,14 +6,21 @@
     "generating": "Generating...",
     "save": "Save",
     "saving": "Saving...",
-    "read": "Read"
+    "read": "Read",
+    "copied": "Copied!",
+    "clickToCopy": "Click to copy"
   },
   "navbar": {
-    "myDecks": "My Decks",
-    "stories": "Stories",
-    "statistics": "Statistics",
-    "logout": "Logout"
-  },
+  "myDecks": "My Decks",
+  "classrooms": "Classrooms",
+  "stories": "Stories",
+  "statistics": "Statistics",
+  "logout": "Logout",
+  "switchToStudent": "Switch to Student mode",
+  "switchToTeacher": "Switch to Teacher mode",
+  "studentMode": "Student Mode",
+  "teacherMode": "Teacher Mode"
+},
   "statistics": {
     "title": "Learning Statistics",
     "activity": {
@@ -38,12 +45,8 @@
       "en": "English",
       "uk": "Ukrainian",
       "de": "German",
-      "pl": "Polish",
-      "es": "Spanish",
       "fr": "French",
-      "it": "Italian",
-      "zh": "Chinese",
-      "ja": "Japanese"
+      "es": "Spanish"
     },
     "proficiency": {
       "beginner": "Beginner (A1-A2)",
@@ -126,6 +129,7 @@
     "btnStudy": "Study",
     "btnStory": "Story",
     "btnAddCard": "Card",
+    "btnAddToClass": "Add to Classroom",
     "cardsCount": "Cards in deck ({{count}})",
     "tableFront": "Original",
     "tableBack": "Translation",
@@ -136,7 +140,8 @@
     "tooltipClear": "Delete sentence",
     "tooltipDelete": "Delete card",
     "empty": "The deck is empty.",
-    "mastered": "Mastered"
+    "mastered": "Mastered",
+    "inClassroom": "Material from Classroom"
   },
   "modals": {
     "createDeck": {
@@ -198,5 +203,53 @@
       "timeout": "Response timeout. The AI is taking too long to reply.",
       "unknown": "An error occurred. Please try again later."
     }
+  },
+  "classrooms": {
+    "titleTeacher": "My Classrooms",
+    "titleStudent": "My Learning",
+    "placeholderTeacher": "New classroom name...",
+    "placeholderStudent": "Enter join code...",
+    "btnCreate": "Create",
+    "btnJoin": "Join",
+    "emptyTeacher": "You haven't created any classrooms yet.",
+    "emptyStudent": "You haven't joined any classrooms yet.",
+    "codeLabel": "Code:",
+    "studentsCount": "Students:",
+    "decksCount": "Decks:",
+    "errors": {
+    "notFound": "Classroom not found. Check the code.",
+    "alreadyJoined": "You have already joined this class.",
+    "teacherConflict": "A teacher cannot be a student in their own class."
+}
+  },
+  "classroomDetails": {
+    "loading": "Loading...",
+    "notFound": "Classroom not found",
+    "confirmRemoveDeck": "Are you sure you want to remove this deck from the classroom?",
+    "confirmDeleteClass": "Are you sure you want to delete this classroom?",
+    "successDelete": "Classroom successfully deleted",
+    "errorDelete": "Error deleting classroom",
+    "confirmLeaveClass": "Are you sure you want to leave the classroom?",
+    "successLeave": "Successfully left the classroom",
+    "errorLeave": "Error leaving classroom",
+    "back": "Back",
+    "deleteClass": "Delete Classroom",
+    "createDeck": "Create Deck",
+    "leaveClass": "Leave Classroom",
+    "overview": "Classroom Overview",
+    "students": "Students",
+    "decks": "Decks",
+    "progress": "Average Class Progress",
+    "materials": "Classroom Materials",
+    "noDecks": "No decks in this classroom yet.",
+    "removeFromClass": "Remove from class",
+    "homework": "Homework / Tasks",
+    "hwPlaceholder": "New task...",
+    "add": "Add",
+    "created": "Created:",
+    "noTasks": "No active tasks",
+    "addDeckSuccess": "Deck successfully added to the class!",
+    "selectClass": "Select classroom",
+    "confirmDeleteTask": "Are you sure you want to delete this task?"
   }
 }

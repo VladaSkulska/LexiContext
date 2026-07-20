@@ -80,5 +80,32 @@ namespace LexiContext.Infrastructure.Repositories
                 .OrderBy(a => a.Date)
                 .ToListAsync();
         }
+
+        public async Task<int> GetClassroomAverageProgressAsync(Guid classroomId)
+        {
+            var classroom = await _context.Classrooms
+                .Include(c => c.Students)
+                .Include(c => c.Decks)
+                .FirstOrDefaultAsync(c => c.Id == classroomId);
+
+            if (classroom == null || !classroom.Students.Any() || !classroom.Decks.Any())
+                return 0;
+
+            var studentIds = classroom.Students.Select(s => s.StudentId).ToList();
+            var deckIds = classroom.Decks.Select(d => d.DeckId).ToList();
+
+            var totalCards = await _context.Cards.CountAsync(c => deckIds.Contains(c.DeckId));
+            if (totalCards == 0) return 0;
+
+            var totalPossibleProgress = totalCards * studentIds.Count;
+
+            var studiedCardsCount = await _context.UserCardProgresses
+                .Where(p => studentIds.Contains(p.UserId) && p.IntervalDays > 0)
+                .Where(p => _context.Cards.Any(c => c.Id == p.CardId && deckIds.Contains(c.DeckId)))
+                .CountAsync();
+
+            var percentage = (double)studiedCardsCount / totalPossibleProgress * 100;
+            return (int)Math.Round(percentage);
+        }
     }
 }

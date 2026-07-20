@@ -6,5 +6,6 @@ namespace LexiContext.Application.Interfaces.Repos
         Task<MasteryLevelDto> GetMasteryLevelAsync(Guid userId, Guid? deckId = null);
         Task<List<ForecastDto>> GetFutureForecastAsync(Guid userId, int days = 7);
         Task<List<ActivityDto>> GetActivityHistoryAsync(Guid userId);
+        Task<int> GetClassroomAverageProgressAsync(Guid classroomId);
     }
 }

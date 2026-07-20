@@ -39,14 +39,14 @@ export const DeleteConfirmDialog = ({
         </Typography>
       </DialogContent>
       
-      <DialogActions sx={{ justifyContent: "center", pb: 3, px: 3, gap: 1 }}>
+      <DialogActions sx={{ justifyContent: "center", pb: 3, px: 3, gap: 2 }}>
         <Button
           onClick={onClose}
           variant="outlined"
           color="inherit"
           fullWidth
           disabled={isDeleting}
-          sx={{ borderRadius: 2 }}
+          sx={{ borderRadius: 2, textTransform: "none", fontWeight: "bold" }}
         >
           {t("common.cancel")}
         </Button>
@@ -56,10 +56,10 @@ export const DeleteConfirmDialog = ({
           color="error"
           fullWidth
           disabled={isDeleting}
-          sx={{ borderRadius: 2, fontWeight: "bold" }}
+          sx={{ borderRadius: 2, textTransform: "none", fontWeight: "bold" }}
           startIcon={isDeleting ? <CircularProgress size={20} color="inherit" /> : null}
         >
-          {isDeleting ? t("common.deleting", "Deleting...") : t("common.delete")}
+          {isDeleting ? t("common.saving") : t("common.delete")}
         </Button>
       </DialogActions>
     </Dialog>

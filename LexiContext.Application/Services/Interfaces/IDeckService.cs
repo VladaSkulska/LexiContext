@@ -9,5 +9,6 @@ namespace LexiContext.Application.Services.Interfaces
         Task<List<DeckDto>> GetAllDecksAsync(Guid userId);
         Task<DeckDto> UpdateDeckAsync(Guid id, UpdateDeckDto dto, Guid userId);
         Task DeleteDeckAsync(Guid id, Guid userId);
+        Task<DeckDto> ForkDeckAsync(Guid deckId, Guid userId);
     }
 }

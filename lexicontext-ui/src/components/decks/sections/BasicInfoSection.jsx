@@ -6,20 +6,22 @@ export const BasicInfoSection = ({
   handleChange,
   isSaving,
   validationError,
+  limitLanguages = false
 }) => {
   const { t } = useTranslation();
 
-  const LANGUAGES = [
+  // Залишено лише 5 мов. Жодного сміття.
+  const ALL_LANGUAGES = [
     { value: 0, label: t("constants.languages.en") },
     { value: 1, label: t("constants.languages.uk") },
     { value: 2, label: t("constants.languages.de") },
-    { value: 3, label: t("constants.languages.pl") },
+    { value: 3, label: t("constants.languages.fr") },
     { value: 4, label: t("constants.languages.es") },
-    { value: 5, label: t("constants.languages.fr") },
-    { value: 6, label: t("constants.languages.it") },
-    { value: 7, label: t("constants.languages.zh") },
-    { value: 8, label: t("constants.languages.ja") },
   ];
+
+  const languagesToUse = limitLanguages 
+    ? ALL_LANGUAGES.filter(lang => lang.value <= 1) // Тільки EN та UK, якщо є ліміт
+    : ALL_LANGUAGES;
 
   return (
     <Grid container spacing={2.5}>
@@ -62,7 +64,7 @@ export const BasicInfoSection = ({
           disabled={isSaving}
           sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3 } }}
         >
-          {LANGUAGES.map((option) => (
+          {languagesToUse.map((option) => (
             <MenuItem key={option.value} value={option.value}>
               {option.label}
             </MenuItem>
@@ -80,7 +82,7 @@ export const BasicInfoSection = ({
           disabled={isSaving}
           sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3 } }}
         >
-          {LANGUAGES.map((option) => (
+          {languagesToUse.map((option) => (
             <MenuItem key={option.value} value={option.value}>
               {option.label}
             </MenuItem>

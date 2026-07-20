@@ -50,5 +50,20 @@ namespace LexiContext.API.Controllers
             var result = await _statisticsService.GetActivityHistoryAsync(userId);
             return Ok(result);
         }
+
+        [HttpGet("classroom/{classroomId}/progress")]
+        [Authorize(Roles = "Teacher")]
+        public async Task<ActionResult<int>> GetClassroomProgress(Guid classroomId)
+        {
+            try
+            {
+                var progress = await _statisticsService.GetClassroomAverageProgressAsync(classroomId);
+                return Ok(progress);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

@@ -22,6 +22,9 @@ import { StoriesListPage } from "./pages/StoriesListPage";
 import { StoryReaderPage } from "./pages/StoryReaderPage";
 import { StudyPage } from "./pages/StudyPage";
 import { StatisticsPage } from "./pages/StatisticsPage";
+import { ClassroomsPage } from "./pages/ClassroomsPage";
+// ДОДАНО ІМПОРТ НОВОЇ СТОРІНКИ
+import { ClassroomDetailsPage } from "./pages/ClassroomDetailsPage"; 
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -66,13 +69,12 @@ export default function App() {
         const isDark = settings.theme === 1;
         setIsDarkMode(isDark);
       } catch (error) {
-        console.error("Не вдалося завантажити налаштування юзера:", error);
+        console.error("Failed to load user settings:", error);
       }
     };
 
     fetchUserSettings();
 
-    // Цей рядок нижче каже ESLint ігнорувати відсутність i18n у списку залежностей
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -123,13 +125,13 @@ export default function App() {
             sx={{ fontSize: 40, mb: 1, opacity: 0.8 }}
           />
           <Typography variant="h6" fontWeight="bold">
-            Потрібна синхронізація
+            Synchronization required
           </Typography>
         </DialogTitle>
         <DialogContent sx={{ textAlign: "center" }}>
           <Typography variant="body1" color="text.secondary">
-            Статус вашого акаунта змінився в іншій вкладці або вікні. Щоб
-            продовжити роботу та уникнути помилок, будь ласка, оновіть дані.
+            Your account status has changed in another tab or window. 
+            To continue working and avoid errors, please update your data.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ justifyContent: "center", pb: 3, px: 3 }}>
@@ -140,7 +142,7 @@ export default function App() {
             size="large"
             sx={{ fontWeight: "bold", textTransform: "none", borderRadius: 2 }}
           >
-            Оновити дані
+            Update data
           </Button>
         </DialogActions>
       </Dialog>
@@ -168,10 +170,7 @@ export default function App() {
             path="/decks"
             element={
               <ProtectedRoute>
-                <DashboardPage
-                  isDarkMode={isDarkMode}
-                  toggleTheme={toggleTheme}
-                />
+                <DashboardPage isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
               </ProtectedRoute>
             }
           />
@@ -179,10 +178,7 @@ export default function App() {
             path="/decks/:id"
             element={
               <ProtectedRoute>
-                <DeckDetailsPage
-                  isDarkMode={isDarkMode}
-                  toggleTheme={toggleTheme}
-                />
+                <DeckDetailsPage isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
               </ProtectedRoute>
             }
           />
@@ -198,17 +194,14 @@ export default function App() {
             path="/stories"
             element={
               <ProtectedRoute>
-                <StoriesListPage
-                  isDarkMode={isDarkMode}
-                  toggleTheme={toggleTheme}
-                />
+                <StoriesListPage isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/story/:id"
+            path="/stories/:id"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute> 
                 <StoryReaderPage
                   isDarkMode={isDarkMode}
                   toggleTheme={toggleTheme}
@@ -220,15 +213,29 @@ export default function App() {
             path="/statistics"
             element={
               <ProtectedRoute>
-                <StatisticsPage
-                  isDarkMode={isDarkMode}
-                  toggleTheme={toggleTheme}
-                />
+                <StatisticsPage isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
               </ProtectedRoute>
             }
-          />{" "}
+          />
+          <Route
+            path="/classrooms"
+            element={
+              <ProtectedRoute>
+                <ClassroomsPage isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
+              </ProtectedRoute>
+            }
+          />
+          {/* ДОДАНО МАРШРУТ СТОРІНКИ КЛАСУ */}
+          <Route
+            path="/classrooms/:id"
+            element={
+              <ProtectedRoute>
+                <ClassroomDetailsPage isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>
   );
-}
+};

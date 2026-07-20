@@ -30,6 +30,15 @@ namespace LexiContext.Infrastructure.Repositories
         {
             return await _context.Decks.AsNoTracking().ToListAsync();
         }
+
+        public async Task<List<Deck>> GetPersonalDecksByUserIdAsync(Guid userId)
+        {
+            return await _context.Decks
+                .AsNoTracking()
+                .Where(d => d.CreatedId == userId && d.OwnerClassroomId == null)
+                .ToListAsync();
+        }
+
         public async Task<List<Deck>> GetAllByUserIdAsync(Guid userId)
         {
             return await _context.Decks
@@ -48,6 +57,14 @@ namespace LexiContext.Infrastructure.Repositories
         {
             _context.Decks.Remove(deck);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<Deck>> GetDecksByIdsAsync(List<Guid> deckIds)
+        {
+            return await _context.Decks
+                .AsNoTracking()
+                .Where(d => deckIds.Contains(d.Id))
+                .ToListAsync();
         }
     }
 }

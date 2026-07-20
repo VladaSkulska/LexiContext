@@ -7,7 +7,9 @@ namespace LexiContext.Domain.Entities
     {
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public bool IsPublic { get; set; }
+        public string? ShareCode { get; set; }
+        public Guid? OwnerClassroomId { get; set; }
+
         public int DailyNewCardsLimit { get; set; } = 20;
         public int DailyReviewLimit { get; set; } = 50;
 
@@ -18,7 +20,6 @@ namespace LexiContext.Domain.Entities
         public ProficiencyLevel ProficiencyLevel { get; set; } = ProficiencyLevel.Beginner;
         public AiTone Tone { get; set; } = AiTone.Neutral;
 
-        
         public Guid CreatedId { get; set; }
         public User? Creater { get; set; }
 

@@ -37,54 +37,41 @@ Strict Rules:
     - WORD STRESS: NEVER use acute accent marks (´) in the translation language ({5}). Use them ONLY if the learning language ({1}) is Ukrainian.
     - NOUNS & PLURALS (German, French, Spanish, etc.): If '{0}' is a noun, you MUST include its definite article (der/die/das, el/la). For GERMAN, also include the Plural form in 'correctedWord'.
     - VERB VALENCY (DE, EN): If '{0}' is a verb, include its required preposition and case in 'correctedWord'.
-    - JAPANESE/CHINESE: Default to standard polite form (Desu/Masu for Japanese) unless Tone dictates otherwise.
     - SLAVIC LANGUAGES: Ensure perfect case agreement (відмінки).
 7. Sensitive Content & Slang: Do not censor words related to conflict, anatomy, or common slang if educational.
 8. Edge Cases & Corrections: 
     - If '{0}' contains a typo, lacks an article, or has incorrect capitalization, return the PERFECT dictionary form in 'correctedWord'.
-9. Asian Languages Phonetics (CRITICAL - NO EXCEPTIONS): 
-    - IF '{1}' IS NOT JAPANESE OR CHINESE: Keep the 'contextReading' field strictly EMPTY "". Do not use ruby tags.
-    - NO BRACKETS: NEVER use square brackets like [みず] or [wǒ] anywhere.
-    - JAPANESE: Wrap ONLY Kanji in <ruby> tags. Leave Hiragana and Katakana as plain text OUTSIDE the <ruby> tags. 
-      CRITICAL: The <rt> tag MUST contain ONLY the reading for the specific Kanji it wraps. DO NOT put okurigana (trailing hiragana) inside <rt>.
-      BAD: <ruby>食べる<rt>たべる</rt></ruby> -> GOOD: <ruby>食<rt>た</rt></ruby>べる.
-    - CHINESE: Wrap EVERY SINGLE character individually in its OWN <ruby> tag. DO NOT group multiple characters under one <rt> tag.
-      BAD: <ruby>谢谢<rt>xièxie</rt></ruby> -> GOOD: <ruby>谢<rt>xiè</rt></ruby><ruby>谢<rt>xiè</rt></ruby>.
-10. Word Translation & Register: Provide the translation of the 'correctedWord' into {5} in 'wordTranslation'. STRICT: NO STRESS MARKS in translations.
-11. JSON Formatting: Escape all internal double quotes inside JSON string values.
+9. Word Translation & Register: Provide the translation of the 'correctedWord' into {5} in 'wordTranslation'. STRICT: NO STRESS MARKS in translations.
+10. JSON Formatting: Escape all internal double quotes inside JSON string values.
 
-Return ONLY a valid JSON object exactly in this format: 
+Return ONLY a valid JSON object exactly in this format. DO NOT use markdown code blocks:
 {{ 
     "generatedContext": "...", 
     "contextTranslation": "...", 
-    "contextReading": "",
     "wordTranslation": "...",
     "correctedWord": "..." 
 }}
-No markdown, no prefixes.
 """;
 
         private const string TranslationPrompt = """
 Task: Provide a professional linguistic translation and correction for the word or phrase '{0}' from {1} to {2}.
 
-Strict Rules:
-1. Correction & Lemma: If '{0}' has a typo, incorrect capitalization, or is a specific form, find its "dictionary form" (lemma).
-2. Language Nuances (Target - {1}):
-    - GENDER & PLURALS: If {1} is German/French/Spanish/Italian noun, ALWAYS include definite article and Plural form.
-    - VERB VALENCY: If {1} is German/English verb, include its required preposition and case.
-    - WORD STRESS: NEVER use acute accent marks (´) in the translation language ({2}). Use ONLY if {1} is Ukrainian.
-    - ASIAN PHONETICS (Japanese/Chinese ONLY): Never use square brackets []. 
-      JAPANESE: Wrap ONLY Kanji individually in <ruby> tags. Leave Hiragana/Katakana outside. NO okurigana inside <rt>. 
-      CHINESE: 1 Character = 1 Ruby Tag. 
-      Do NOT output plain text reading. Use <ruby> format ONLY.
-    - EUROPEAN LANGUAGES: NO brackets and NO phonetic reading.
-3. Translation (Native - {2}): 
-    - Provide the most natural translation into {2}. 
-    - STRICT: NO STRESS MARKS.
-4. Tone: Match the tone of the source word.
-5. No Metadata: Return ONLY the final result in the exact format: "CorrectedWord - Translation". 
+CRITICAL OUTPUT RULE:
+You MUST return ONLY a single plain text string in this exact format:
+[Word] - [Translation]
 
-Output: Just the corrected form and translation separated by a dash.
+Rules for [Word] ({1}):
+1. Correction: Fix typos and use dictionary form (lemma).
+2. Grammar: If {1} is German/French/Spanish, ALWAYS include definite article and plural. If verb, include preposition.
+
+Rules for [Translation] ({2}):
+1. Natural translation without stress marks (´) unless {1} is Ukrainian.
+
+Examples of exact expected output:
+das Buch, -⸚er - book
+la casa, -s - house
+
+Return NOTHING ELSE. No JSON, no markdown formatting, no explanations.
 """;
 
         private const string SimplifyPrompt = """
@@ -99,84 +86,51 @@ Rules:
 2. Vocabulary & Grammar: Adapt strictly to the {4} level. Keep the sentence very short (5-10 words). AVOID complex verbs.
 3. Meaning: Keep the core meaning of the original sentence.
 4. Word Stress: NEVER use acute accent marks (´) in the translation language ({3}).
-5. Asian Languages Phonetics (CRITICAL): 
-    - IF '{2}' IS NOT JAPANESE OR CHINESE: Keep 'contextReading' strictly as "". Do NOT use ruby tags.
-    - JAPANESE: Wrap ONLY Kanji in <ruby>. Hiragana stays outside. NO okurigana inside <rt>.
-    - CHINESE: Wrap EVERY SINGLE character individually. 1 Character = 1 Ruby Tag. NO BRACKETS.
-6. Translation: STRICTLY NO STRESS MARKS in 'contextTranslation'.
-7. JSON Formatting: Escape all internal double quotes inside JSON string values.
-8. Output: Return ONLY a valid JSON object exactly in this format: 
+5. Translation: STRICTLY NO STRESS MARKS in 'contextTranslation'.
+6. JSON Formatting: Escape all internal double quotes inside JSON string values.
+7. Output: Return ONLY a valid JSON object exactly in this format. DO NOT use markdown code blocks:
 {{ 
     "generatedContext": "...", 
     "contextTranslation": "...", 
-    "contextReading": "", 
     "wordTranslation": "" 
 }}
-No markdown, no prefixes.
 """;
 
         private const string StoryPrompt = """
-Task: Write a short, engaging {4} (Genre) in {1}.
-Proficiency Level: {2}.
-User's Target Words to include: {0}.
-Native Language (for vocabulary translation): {3}.
-Number of NEW useful words/phrases AI must introduce: {5}.
+        Task: Write a short, engaging {4} (Genre) in {1}.
+        Proficiency Level: {2}.
+        User's Target Words to include: {0}.
+        Native Language (for vocabulary translation): {3}.
+        Number of NEW useful words/phrases AI must introduce: {5}.
 
-Style & Inspiration:
-The story MUST be interesting, with natural conversational dialogue and everyday situations. Keep sentences relatively short. Adapt grammar strictly to the '{2}' level.
+        Style & Inspiration:
+        The story MUST be interesting, with natural conversational dialogue and everyday situations. Keep sentences relatively short. Adapt grammar strictly to the '{2}' level.
 
-Strict Rules for Formatting:
-1. Plain Text Default: The vast majority of the story MUST be regular, unformatted text.
-2. User's Words: You MUST include ALL the provided Target Words ({0}). Enclose ONLY these exact words in bold tags: <b>word</b>.
-3. AI Suggested Words: Introduce EXACTLY {5} NEW, highly useful words, idioms, or colloquial phrases. Enclose ONLY these {5} new items in bold and italic tags: <b><i>word</i></b>.
+        Strict Rules for Formatting:
+        1. Plain Text Default: The vast majority of the story MUST be regular, unformatted text.
+        2. User's Words: You MUST include ALL the provided Target Words ({0}). Enclose ONLY these exact words in bold tags: <b>word</b>.
+        3. AI Suggested Words: Introduce EXACTLY {5} NEW, highly useful words, idioms, or colloquial phrases. Enclose ONLY these {5} new items in bold and italic tags: <b><i>word</i></b>.
 
-Language-Specific Nuances (CRITICAL):
-    - IF '{1}' IS NOT JAPANESE AND NOT CHINESE: You MUST NOT use <ruby> tags anywhere. The 'reading' field in vocabulary MUST be completely empty "".
-    - IF '{1}' IS JAPANESE OR CHINESE:
-      - NO BRACKETS: Never use square brackets [] anywhere.
-      - JAPANESE: Wrap ONLY Kanji characters in <ruby> tags in title and content.
-        STRICT: Hiragana and Katakana MUST remain as plain text OUTSIDE any <ruby> tag. NEVER wrap a hiragana or katakana character in <ruby>.
-        CRITICAL: The <rt> tag MUST contain ONLY the reading for that specific Kanji character. DO NOT include okurigana (trailing hiragana) inside <rt>.
-        GOOD: <ruby>食<rt>た</rt></ruby>べる
-        BAD: <ruby>は<rt>は</rt></ruby> — hiragana must NEVER be wrapped.
-        BAD: <ruby>食べる<rt>たべる</rt></ruby> — okurigana must stay outside.
-      - CHINESE: Wrap EVERY SINGLE character individually in its OWN <ruby> tag. 1 Character = 1 Ruby Tag.
-        GOOD: <ruby>谢<rt>xiè</rt></ruby><ruby>谢<rt>xiè</rt></ruby>
-        BAD: <ruby>谢谢<rt>xièxie</rt></ruby>
-      - ALIGNMENT: Place <b> or <i> tags strictly around each individual character's ruby tag or plain text.
+        Vocabulary Extraction (CRITICAL - STRICT ARRAY LIMIT): 
+        - The JSON 'vocabulary' array MUST contain EXACTLY {5} items.
+        - These {5} items MUST be ONLY the NEW words/phrases you introduced (the <b><i> ones).
+        - COMPLETELY EXCLUDE the User's Target Words ({0}) from this JSON array.
 
-Vocabulary Extraction (CRITICAL - STRICT ARRAY LIMIT): 
-- The JSON 'vocabulary' array MUST contain EXACTLY {5} items.
-- These {5} items MUST be ONLY the NEW words/phrases you introduced (the <b><i> ones).
-- COMPLETELY EXCLUDE the User's Target Words ({0}) from this JSON array.
-- ASIAN LANGUAGES (Japanese/Chinese): The 'phrase' field MUST contain the <ruby> tags formatted EXACTLY as described above. The 'reading' field MUST contain ONLY plain text phonetics (Pinyin for Chinese, HIRAGANA for Japanese). STRICTLY NO ROMAJI. NO HTML in 'reading'.
-- NON-ASIAN LANGUAGES: The 'phrase' field must be plain text. The 'reading' field MUST be strictly "".
-- CRITICAL: In the 'phrase' JSON field, enclose the core Target/AI word in <b> tags. Place the <b> tags OUTSIDE the <ruby> elements.
+        Translation Rules for Vocabulary: 
+            Provide the translation matching the story context into '{3}'. The 'translation' field MUST be pure plain text. ABSOLUTELY NO HTML tags and NO STRESS MARKS.
 
-Translation Rules for Vocabulary: 
-    Provide the translation matching the story context into '{3}'. The 'translation' field MUST be pure plain text. ABSOLUTELY NO HTML tags and NO STRESS MARKS.
+        Typos & Gibberish Handling: GUESS the intended word and use the CORRECTED word.
+        JSON Formatting: Escape ONLY internal double quotes inside JSON string values. NEVER escape single quotes or apostrophes.
 
-Typos & Gibberish Handling: GUESS the intended word and use the CORRECTED word.
-JSON Formatting: Escape ONLY internal double quotes inside JSON string values. NEVER escape single quotes or apostrophes.
-Return ONLY a valid JSON object exactly in this format:
-{{
-    "title": "Title formatted according to language rules",
-    "content": "Full story text with <b> for User words...",
-    "vocabulary": [
-        {{ "phrase": "extracted text with <b> tags", "translation": "translation without formatting", "reading": "plain text reading (Hiragana/Pinyin) or empty" }}
-    ]
-}}
-No markdown, no prefixes.
-""";
-
-        private const string FormatAsianWordPrompt = """
-Task: Add phonetic reading to the Asian word '{0}' in {1}.
-Strict Rules:
-1. NO BRACKETS: Never use square brackets [].
-2. JAPANESE: Use <ruby> ONLY for Kanji. Leave Hiragana/Katakana as plain text OUTSIDE the <ruby> tags. The <rt> MUST contain ONLY the reading for the specific Kanji. DO NOT put okurigana inside <rt>. (GOOD: <ruby>食<rt>た</rt></ruby>べる).
-3. CHINESE: Wrap EVERY SINGLE character individually in its OWN HTML <ruby> tag. 1 Character = 1 Ruby Tag.
-4. Return ONLY the formatted string. No translation, no markdown.
-""";
+        Return ONLY a valid JSON object exactly in this format. DO NOT use markdown code blocks like ```json. Output raw JSON only:
+        {{
+            "title": "Title formatted according to language rules",
+            "content": "Full story text with <b> for User words...",
+            "vocabulary": [
+                {{ "phrase": "extracted text with <b> tags", "translation": "translation without formatting" }}
+            ]
+        }}
+        """;
         #endregion
 
         public AiContextService(HttpClient httpClient, IConfiguration config, ILogger<AiContextService> logger)
@@ -276,25 +230,6 @@ Strict Rules:
             }
         }
 
-        public async Task<string> FormatAsianWordAsync(string word, LearningLanguage learningLanguage)
-        {
-            if (learningLanguage != LearningLanguage.Japanese && learningLanguage != LearningLanguage.Chinese)
-                return word;
-
-            var prompt = string.Format(FormatAsianWordPrompt, word, learningLanguage);
-            try
-            {
-                var rawText = await SendGeminiRequestAsync(prompt, _modelLite);
-                return rawText.Trim();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Lite model failed for Formatting. Trying Flash...");
-                var rawTextFlash = await SendGeminiRequestAsync(prompt, _model);
-                return rawTextFlash.Trim();
-            }
-        }
-
         private async Task<string> SendGeminiRequestAsync(
             string prompt,
             string targetModel,
@@ -379,13 +314,28 @@ Strict Rules:
         private string ExtractJsonFromRawText(string rawText)
         {
             if (string.IsNullOrWhiteSpace(rawText)) return string.Empty;
-            int startIndex = rawText.IndexOf('{');
-            int endIndex = rawText.LastIndexOf('}');
+
+            var text = rawText.Trim();
+
+            if (text.StartsWith("```json", StringComparison.OrdinalIgnoreCase))
+                text = text.Substring(7);
+            else if (text.StartsWith("```"))
+                text = text.Substring(3);
+
+            if (text.EndsWith("```"))
+                text = text.Substring(0, text.Length - 3);
+
+            text = text.Trim();
+
+            int startIndex = text.IndexOf('{');
+            int endIndex = text.LastIndexOf('}');
+
             if (startIndex >= 0 && endIndex > startIndex)
             {
-                return rawText.Substring(startIndex, endIndex - startIndex + 1);
+                return text.Substring(startIndex, endIndex - startIndex + 1);
             }
-            return rawText;
+
+            return text;
         }
     }
 }
