@@ -2,12 +2,13 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Копіюємо файл рішення та всі 5 .csproj файлів відповідно до твого Solution Explorer
+# Копіюємо файл рішення та всі .csproj файли відповідно до твого Solution Explorer
 COPY *.sln ./
 COPY LexiContext.API/*.csproj ./LexiContext.API/
 COPY LexiContext.Application/*.csproj ./LexiContext.Application/
 COPY LexiContext.Domain/*.csproj ./LexiContext.Domain/
 COPY LexiContext.Infrastructure/*.csproj ./LexiContext.Infrastructure/
+COPY LexiContext.Tests/*.csproj ./LexiContext.Tests/
 
 # Відновлюємо залежності для всіх проектів
 RUN dotnet restore
