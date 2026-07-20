@@ -35,7 +35,6 @@ builder.Services.AddHttpClient<IAiContextService, AiContextService>(client =>
 });
 
 builder.Services.AddEndpointsApiExplorer();
-
 builder.Services.AddSwaggerGen(c =>
 {
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -82,29 +81,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-builder.Services.AddDbContext<AppDbContext>(options =>
-options.UseNpgsql(connectionString));
+builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IDeckRepository, DeckRepository>();
 builder.Services.AddScoped<IDeckService, DeckService>();
 builder.Services.AddScoped<ICardRepository, CardRepository>();
 builder.Services.AddScoped<ICardService, CardService>();
-
 builder.Services.AddScoped<IStoryRepository, StoryRepository>();
 builder.Services.AddScoped<IStoryService, StoryService>();
-
 builder.Services.AddScoped<IUserSettingsRepository, UserSettingsRepository>();
 builder.Services.AddScoped<IUserSettingsService, UserSettingsService>();
-
 builder.Services.AddScoped<IStatisticsRepository, StatisticsRepository>();
 builder.Services.AddScoped<IStatisticsService, StatisticsService>();
-
 builder.Services.AddScoped<IUserActivityRepository, UserActivityRepository>();
-
 builder.Services.AddScoped<IClassroomRepository, ClassroomRepository>();
 builder.Services.AddScoped<IClassroomService, ClassroomService>();
-
 builder.Services.AddScoped<ISpacedRepetitionService, SpacedRepetitionService>();
 builder.Services.AddScoped<IStudyService, StudyService>();
 builder.Services.AddScoped<IUserCardProgressRepository, UserCardProgressRepository>();
@@ -113,6 +104,7 @@ builder.Services.AddScoped<IExternalAuthProvider, GoogleAuthProvider>();
 builder.Services.AddScoped<IJwtProvider, JwtService>();
 builder.Services.AddScoped<AuthService>();
 
+// НАЛАШТУВАННЯ CORS: Дозволяємо твій локальний React та додаємо підтримку Credentials (для Google Auth)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp",
@@ -125,22 +117,13 @@ builder.Services.AddCors(options =>
         });
 });
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowReactApp",
-        policy =>
-        {
-            policy.AllowAnyOrigin()
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
-        });
-});
-
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
-
 app.UseRouting();
+
+// ВАЖЛИВО: КОРС має стояти строго тут — після UseRouting, але ПЕРЕД авторизацією!
+app.UseCors("AllowReactApp");
 
 if (app.Environment.IsDevelopment())
 {
