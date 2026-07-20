@@ -40,7 +40,7 @@ import { Navbar } from "../components/common/Navbar";
 import { GenerateStoryModal } from "../components/stories/GenerateStoryModal";
 import { CreateDeckModal } from "../components/decks/CreateDeckModal";
 import { AddDeckToClassroomModal } from "../components/decks/AddDeckToClassroomModal";
-import { DeleteConfirmDialog } from "../components/decks/DeleteConfirmDialog"; // <-- Твій гарний діалог
+import { DeleteConfirmDialog } from "../components/decks/DeleteConfirmDialog";
 import axiosClient from "../api/axiosClient";
 import { useTranslation } from "react-i18next";
 import { getActiveRole } from "../utils/auth";
@@ -64,6 +64,7 @@ export const ClassroomDetailsPage = ({ isDarkMode, toggleTheme }) => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isCreatingDeck, setIsCreatingDeck] = useState(false);
   const [userRole, setUserRole] = useState(() => getActiveRole());
+  const [isAddExistingModalOpen, setIsAddExistingModalOpen] = useState(false);
 
   const [tasks, setTasks] = useState([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(true);
@@ -72,7 +73,6 @@ export const ClassroomDetailsPage = ({ isDarkMode, toggleTheme }) => {
   const [codeCopied, setCodeCopied] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
-  // Стейт для кастомного діалогу підтвердження дій
   const [confirmDialog, setConfirmDialog] = useState({ open: false, title: "", content: "", action: null });
   const [isProcessingAction, setIsProcessingAction] = useState(false);
 
@@ -96,6 +96,22 @@ export const ClassroomDetailsPage = ({ isDarkMode, toggleTheme }) => {
   useEffect(() => {
     if (userRole) fetchHomework();
   }, [fetchHomework, userRole]);
+
+  const handleAddExistingDecks = async (selectedDeckIds) => {
+    try {
+      await axiosClient.post(`/Classrooms/${classroomId}/decks`, { deckIds: selectedDeckIds });
+      
+      const response = await axiosClient.get(`/Classrooms/${classroomId}/decks?t=${Date.now()}`);
+      setDecks(response.data);
+      setClassroom((prev) => ({ ...prev, decksCount: response.data.length }));
+
+      setIsAddExistingModalOpen(false);
+      setSnackbar({ open: true, message: t("classroomDetails.addExistingSuccess") || "Колоди успішно додано до класу!", severity: "success" });
+    } catch (error) {
+      console.error("Error adding existing decks:", error);
+      setSnackbar({ open: true, message: error.response?.data?.message || t("classroomDetails.addExistingError") || "Помилка при додаванні колод", severity: "error" });
+    }
+  };
 
   useEffect(() => {
     const fetchClassroomDetails = async () => {
@@ -167,13 +183,12 @@ export const ClassroomDetailsPage = ({ isDarkMode, toggleTheme }) => {
       setSnackbar({ open: true, message: t("common.save") + " ✅", severity: "success" });
     } catch (error) {
       console.error("Error creating deck:", error);
-      setSnackbar({ open: true, message: error.response?.data?.message || "Помилка при створенні колоди", severity: "error" });
+      setSnackbar({ open: true, message: error.response?.data?.message || t("classroomDetails.errorDelete"), severity: "error" });
     } finally {
       setIsCreatingDeck(false);
     }
   };
 
-  // ----- УНІВЕРСАЛЬНИЙ ОБРОБНИК ПІДТВЕРДЖЕНЬ -----
   const executeDialogAction = async () => {
     if (!confirmDialog.action) return;
     setIsProcessingAction(true);
@@ -192,9 +207,9 @@ export const ClassroomDetailsPage = ({ isDarkMode, toggleTheme }) => {
           await axiosClient.delete(`/Classrooms/${classroomId}/decks/${deckId}`);
           setDecks((prev) => prev.filter((d) => d.id !== deckId));
           setClassroom((prev) => ({ ...prev, decksCount: Math.max(0, (prev.decksCount || 0) - 1) }));
-          setSnackbar({ open: true, message: "Колоду видалено з класу", severity: "success" });
+          setSnackbar({ open: true, message: t("common.delete") + " ✅", severity: "success" });
         } catch (error) {
-          setSnackbar({ open: true, message: error.response?.data?.message || "Помилка", severity: "error" });
+          setSnackbar({ open: true, message: error.response?.data?.message || t("classroomDetails.errorDelete"), severity: "error" });
         }
       }
     });
@@ -210,7 +225,7 @@ export const ClassroomDetailsPage = ({ isDarkMode, toggleTheme }) => {
           await axiosClient.delete(`/Classrooms/${classroomId}`);
           navigate("/classrooms", { state: { refresh: Date.now() } });
         } catch (error) {
-          setSnackbar({ open: true, message: "Помилка при видаленні класу", severity: "error" });
+          setSnackbar({ open: true, message: t("classroomDetails.errorDelete"), severity: "error" });
         }
       }
     });
@@ -226,12 +241,11 @@ export const ClassroomDetailsPage = ({ isDarkMode, toggleTheme }) => {
           await axiosClient.post(`/Classrooms/leave`, { classroomId });
           navigate("/classrooms", { state: { refresh: Date.now() } });
         } catch (error) {
-          setSnackbar({ open: true, message: "Помилка виходу з класу", severity: "error" });
+          setSnackbar({ open: true, message: t("classroomDetails.errorLeave"), severity: "error" });
         }
       }
     });
   };
-  // ------------------------------------------------
 
   const handleAddTask = async () => {
     if (!newTaskText.trim()) return;
@@ -258,7 +272,7 @@ export const ClassroomDetailsPage = ({ isDarkMode, toggleTheme }) => {
           setTasks((prev) => prev.filter((t) => t.groupTaskId !== targetId && t.id !== targetId));
           setSnackbar({ open: true, message: t("common.delete") + " ✅", severity: "success" });
         } catch (error) {
-          setSnackbar({ open: true, message: error.response?.data?.message || "Помилка", severity: "error" });
+          setSnackbar({ open: true, message: error.response?.data?.message || t("classroomDetails.errorDelete"), severity: "error" });
         }
       }
     });
@@ -534,15 +548,26 @@ export const ClassroomDetailsPage = ({ isDarkMode, toggleTheme }) => {
           </Typography>
 
           {userRole === "Teacher" && (
-            <Button
-              variant="contained"
-              color="secondary"
-              startIcon={<AddIcon />}
-              onClick={() => setIsCreateModalOpen(true)}
-              sx={{ textTransform: "none", borderRadius: 2, fontWeight: "bold" }}
-            >
-              {t("classroomDetails.createDeck")}
-            </Button>
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <Button
+                variant="outlined"
+                color="secondary"
+                startIcon={<StyleIcon />}
+                onClick={() => setIsAddExistingModalOpen(true)}
+                sx={{ textTransform: "none", borderRadius: 2, fontWeight: "bold" }}
+              >
+                {t("classroomDetails.addExistingBtn") || "Вибрати з існуючих"}
+              </Button>
+              <Button
+                variant="contained"
+                color="secondary"
+                startIcon={<AddIcon />}
+                onClick={() => setIsCreateModalOpen(true)}
+                sx={{ textTransform: "none", borderRadius: 2, fontWeight: "bold" }}
+              >
+                {t("classroomDetails.createDeck")}
+              </Button>
+            </Box>
           )}
         </Box>
 
@@ -655,6 +680,13 @@ export const ClassroomDetailsPage = ({ isDarkMode, toggleTheme }) => {
         title={confirmDialog.title}
         content={confirmDialog.content}
         isDeleting={isProcessingAction}
+      />
+
+      <AddDeckToClassroomModal
+        open={isAddExistingModalOpen}
+        onClose={() => setIsAddExistingModalOpen(false)}
+        classroomId={classroomId}
+        onSuccess={handleAddExistingDecks}
       />
 
       {selectedDeckId && (

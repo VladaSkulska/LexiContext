@@ -250,6 +250,9 @@
     "noTasks": "Немає активних завдань",
     "addDeckSuccess": "Колоду успішно додано до класу!",
     "selectClass": "Виберіть клас",
-    "confirmDeleteTask": "Ви дійсно хочете видалити це завдання?"
+    "confirmDeleteTask": "Ви дійсно хочете видалити це завдання?",
+    "addExistingBtn": "Вибрати з існуючих",
+    "addExistingSuccess": "Колоди успішно додано до класу!",
+    "addExistingError": "Помилка при додаванні колод"
   }
 }
