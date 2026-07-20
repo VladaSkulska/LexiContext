@@ -125,11 +125,6 @@ builder.Services.AddCors(options =>
         });
 });
 
-var app = builder.Build();
-
-app.UseMiddleware<ExceptionHandlingMiddleware>();
-
-app.UseRouting();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp",
@@ -140,6 +135,12 @@ builder.Services.AddCors(options =>
                   .AllowAnyMethod();
         });
 });
+
+var app = builder.Build();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+app.UseRouting();
 
 if (app.Environment.IsDevelopment())
 {
