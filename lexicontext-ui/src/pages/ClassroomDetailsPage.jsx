@@ -99,17 +99,29 @@ export const ClassroomDetailsPage = ({ isDarkMode, toggleTheme }) => {
 
   const handleAddExistingDecks = async (selectedDeckIds) => {
     try {
-      await axiosClient.post(`/Classrooms/${classroomId}/decks`, { deckIds: selectedDeckIds });
-      
+      await Promise.all(
+        selectedDeckIds.map((deckId) =>
+          axiosClient.post(`/Classrooms/${classroomId}/decks/${deckId}`)
+        )
+      );
+
       const response = await axiosClient.get(`/Classrooms/${classroomId}/decks?t=${Date.now()}`);
       setDecks(response.data);
       setClassroom((prev) => ({ ...prev, decksCount: response.data.length }));
 
       setIsAddExistingModalOpen(false);
-      setSnackbar({ open: true, message: t("classroomDetails.addExistingSuccess") || "Колоди успішно додано до класу!", severity: "success" });
+      setSnackbar({ 
+        open: true, 
+        message: t("classroomDetails.addExistingSuccess"), 
+        severity: "success" 
+      });
     } catch (error) {
       console.error("Error adding existing decks:", error);
-      setSnackbar({ open: true, message: error.response?.data?.message || t("classroomDetails.addExistingError") || "Помилка при додаванні колод", severity: "error" });
+      setSnackbar({ 
+        open: true, 
+        message: error.response?.data?.message || t("classroomDetails.addExistingError"), 
+        severity: "error" 
+      });
     }
   };
 
