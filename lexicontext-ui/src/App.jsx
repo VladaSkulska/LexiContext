@@ -210,6 +210,14 @@ export default function App() {
             }
           />
           <Route
+            path="/story/:id"
+            element={
+              <ProtectedRoute> 
+                <StoryReaderPage isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/statistics"
             element={
               <ProtectedRoute>
