@@ -39,7 +39,7 @@ import CheckIcon from "@mui/icons-material/Check";
 import { Navbar } from "../components/common/Navbar";
 import { GenerateStoryModal } from "../components/stories/GenerateStoryModal";
 import { CreateDeckModal } from "../components/decks/CreateDeckModal";
-import { AddDeckToClassroomModal } from "../components/decks/AddDeckToClassroomModal";
+import { SelectExistingDecksModal } from "../components/decks/SelectExistingDecksModal";
 import { DeleteConfirmDialog } from "../components/decks/DeleteConfirmDialog";
 import axiosClient from "../api/axiosClient";
 import { useTranslation } from "react-i18next";
@@ -682,11 +682,11 @@ export const ClassroomDetailsPage = ({ isDarkMode, toggleTheme }) => {
         isDeleting={isProcessingAction}
       />
 
-      <AddDeckToClassroomModal
-        open={isAddExistingModalOpen}
-        onClose={() => setIsAddExistingModalOpen(false)}
-        classroomId={classroomId}
-        onSuccess={handleAddExistingDecks}
+      <SelectExistingDecksModal
+      open={isAddExistingModalOpen}
+      onClose={() => setIsAddExistingModalOpen(false)}
+      classroomId={classroomId}
+      onSuccess={handleAddExistingDecks}
       />
 
       {selectedDeckId && (
