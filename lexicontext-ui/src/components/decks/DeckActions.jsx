@@ -36,8 +36,7 @@ export const DeckActions = ({
         {t("deckDetails.btnStudy")}
       </Button>
 
-      {/* Історію ховаємо, якщо ми зайшли з класу */}
-      {!fromClassroom && (
+      {(!fromClassroom || userRole === "Student") && (
         <Button
           variant="contained"
           color="secondary"
@@ -51,7 +50,6 @@ export const DeckActions = ({
         </Button>
       )}
 
-      {/* Додавання карток залишаємо власнику завжди, щоб міг наповнювати колоду навіть з класу */}
       {isEditingAllowed && (
         <Button
           variant="outlined"

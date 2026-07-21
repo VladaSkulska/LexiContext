@@ -66,5 +66,12 @@ namespace LexiContext.Infrastructure.Repositories
                 .Where(d => deckIds.Contains(d.Id))
                 .ToListAsync();
         }
+
+        public async Task<List<Deck>> GetDecksByOwnerClassroomIdAsync(Guid classroomId)
+        {
+            return await _context.Decks
+                .Where(d => d.OwnerClassroomId == classroomId)
+                .ToListAsync();
+        }
     }
 }

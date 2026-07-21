@@ -1,4 +1,5 @@
-﻿using LexiContext.Application.Interfaces.Repos;
+﻿using LexiContext.Application.DTOs.Classrooms;
+using LexiContext.Application.Interfaces.Repos;
 using LexiContext.Domain.Entities;
 using LexiContext.Domain.Entities.Classes;
 using LexiContext.Domain.Exceptions;
@@ -69,13 +70,10 @@ namespace LexiContext.Infrastructure.Repositories
 
         public async Task<List<Classroom>> GetStudentClassroomsAsync(Guid studentId)
         {
-            return await _context.ClassroomStudents
-                .Include(cs => cs.Classroom)
-                    .ThenInclude(c => c!.Students)
-                .Include(cs => cs.Classroom)
-                    .ThenInclude(c => c!.Decks)
-                .Where(cs => cs.StudentId == studentId)
-                .Select(cs => cs.Classroom!)
+            return await _context.Classrooms
+                .Include(c => c.Students)
+                .Include(c => c.Decks)
+                .Where(c => c.Students.Any(s => s.StudentId == studentId))
                 .ToListAsync();
         }
 
@@ -139,17 +137,14 @@ namespace LexiContext.Infrastructure.Repositories
                     .Select(c => c.Id)
                     .ToListAsync();
 
-                var progressToRecords = await _context.UserCardProgresses.Where(p => studentIds.Contains(p.UserId) 
-                && cardIds.Contains(p.CardId)).ToListAsync();
+                await _context.UserCardProgresses
+                    .Where(p => studentIds.Contains(p.UserId) && cardIds.Contains(p.CardId))
+                    .ExecuteDeleteAsync();
 
-                _context.UserCardProgresses.RemoveRange(progressToRecords);
+                await _context.ClassroomDecks
+                    .Where(cd => cd.ClassroomId == classroomId && cd.DeckId == deckId)
+                    .ExecuteDeleteAsync();
 
-                var classroomDeck = await _context.ClassroomDecks
-                    .FirstOrDefaultAsync(cd => cd.ClassroomId == classroomId && cd.DeckId == deckId);
-
-                if (classroomDeck != null) _context.ClassroomDecks.Remove(classroomDeck);
-
-                await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
             }
             catch
@@ -180,6 +175,22 @@ namespace LexiContext.Infrastructure.Repositories
             return await _context.StudentHomeworks
                 .Where(h => h.ClassroomId == classroomId)
                 .OrderByDescending(h => h.CreatedAt)
+                .ToListAsync();
+        }
+        public async Task<List<HomeworkSummaryDto>> GetHomeworkSummaryForTeacherAsync(Guid classroomId)
+        {
+            return await _context.StudentHomeworks
+                .Where(h => h.ClassroomId == classroomId)
+                .GroupBy(h => new { h.GroupTaskId, h.TaskText, h.CreatedAt })
+                .Select(g => new HomeworkSummaryDto(
+                    g.Key.GroupTaskId,
+                    g.Key.TaskText,
+                    g.Key.CreatedAt,
+                    g.Count(),
+                    g.Count(x => x.IsCompleted),
+                    g.All(x => x.IsCompleted)
+                ))
+                .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync();
         }
 

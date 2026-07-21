@@ -12,6 +12,7 @@ namespace LexiContext.Application.Interfaces.Repos
         Task DeleteAsync(Deck deck);
         Task<List<Deck>> GetDecksByIdsAsync(List<Guid> deckIds);
         Task<List<Deck>> GetPersonalDecksByUserIdAsync(Guid userId);
+        Task<List<Deck>> GetDecksByOwnerClassroomIdAsync(Guid classroomId);
 
     }
 }

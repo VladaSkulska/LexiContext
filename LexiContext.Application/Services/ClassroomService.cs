@@ -132,8 +132,7 @@ namespace LexiContext.Infrastructure.Repositories
             // Витягуємо всі деки за цими ID
             var sharedDecks = await _deckRepository.GetDecksByIdsAsync(sharedDeckIds);
 
-            var allUserDecks = await _deckRepository.GetAllByUserIdAsync(classroom.TeacherId);
-            var ownedByClassDecks = allUserDecks.Where(d => d.OwnerClassroomId == classroomId).ToList();
+            var ownedByClassDecks = await _deckRepository.GetDecksByOwnerClassroomIdAsync(classroomId);
 
             var resultDecks = sharedDecks
                 .UnionBy(ownedByClassDecks, d => d.Id)
@@ -220,20 +219,17 @@ namespace LexiContext.Infrastructure.Repositories
             if (classroom == null || classroom.TeacherId != teacherId)
                 throw new UnauthorizedAccessException("You are not the teacher of this class.");
 
-            var allHomeworks = await _classroomRepository.GetHomeworksByClassroomAsync(classroomId);
+            var allHomeworks = await _classroomRepository.GetHomeworkSummaryForTeacherAsync(classroomId);
 
-            return allHomeworks
-                .GroupBy(h => h.GroupTaskId)
-                .Select(g => new
-                {
-                    groupTaskId = g.Key,
-                    taskText = g.First().TaskText,
-                    createdAt = g.First().CreatedAt.ToString("dd.MM.yyyy"),
-                    totalStudents = g.Count(),
-                    completedCount = g.Count(x => x.IsCompleted),
-                    isCompleted = g.All(x => x.IsCompleted) 
-                })
-                .ToList();
+            return allHomeworks.Select(h => new
+            {
+                groupTaskId = h.GroupTaskId,
+                taskText = h.TaskText,
+                createdAt = h.CreatedAt.ToString("dd.MM.yyyy"),
+                totalStudents = h.TotalStudents,
+                completedCount = h.CompletedCount,
+                isCompleted = h.IsCompleted
+            }).ToList();
         }
 
         public async Task<object> GetHomeworkForStudentAsync(Guid classroomId, Guid studentId)
