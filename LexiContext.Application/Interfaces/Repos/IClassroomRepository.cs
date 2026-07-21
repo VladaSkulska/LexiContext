@@ -1,4 +1,5 @@
-﻿using LexiContext.Domain.Entities.Classes;
+﻿using LexiContext.Application.DTOs.Classrooms;
+using LexiContext.Domain.Entities.Classes;
 
 namespace LexiContext.Application.Interfaces.Repos
 {
@@ -27,6 +28,6 @@ namespace LexiContext.Application.Interfaces.Repos
         Task<StudentHomework?> GetHomeworkByGroupAndStudentAsync(Guid groupTaskId, Guid studentId);
         Task DeleteHomeworkByGroupTaskIdAsync(Guid groupTaskId);
         Task UpdateHomeworkAsync(StudentHomework homework);
-        Task<List<dynamic>> GetHomeworkSummaryForTeacherAsync(Guid classroomId);
+        Task<List<HomeworkSummaryDto>> GetHomeworkSummaryForTeacherAsync(Guid classroomId);
     }
 }
