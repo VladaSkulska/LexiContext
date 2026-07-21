@@ -139,7 +139,7 @@ namespace LexiContext.Application.Services
 
         public async Task ReviewCardAsync(ReviewCardDto dto, Guid userId)
         {
-            var card = await GetCardOrThrowAsync(dto.CardId, userId);
+            var card = await GetCardOrThrowAsync(dto.CardId, userId, strictOwnerCheck: false);
 
             var progress = await _progressRepository.GetByCardIdAsync(userId, dto.CardId);
             bool isNew = false;
@@ -338,12 +338,12 @@ namespace LexiContext.Application.Services
             return deck;
         }
 
-        private async Task<Card> GetCardOrThrowAsync(Guid cardId, Guid userId)
+        private async Task<Card> GetCardOrThrowAsync(Guid cardId, Guid userId, bool strictOwnerCheck = true)
         {
             var card = await _cardRepository.GetByIdAsync(cardId)
                 ?? throw new NotFoundException("Card", cardId);
 
-            await GetDeckOrThrowAsync(card.DeckId, userId);
+            await GetDeckOrThrowAsync(card.DeckId, userId, strictOwnerCheck);
             return card;
         }
 
