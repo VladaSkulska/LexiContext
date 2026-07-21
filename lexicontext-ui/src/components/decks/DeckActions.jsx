@@ -36,20 +36,20 @@ export const DeckActions = ({
         {t("deckDetails.btnStudy")}
       </Button>
 
-      {(!fromClassroom || userRole === "Student") && (
-        <Button
-          variant="contained"
-          color="secondary"
-          size="large"
-          startIcon={<AutoStoriesIcon />}
-          onClick={onOpenStoryModal}
-          disabled={cardsCount === 0}
-          sx={{ borderRadius: 3, px: 3, textTransform: "none", fontWeight: "bold" }}
-        >
-          {t("deckDetails.btnStory")}
-        </Button>
-      )}
+      {/* Кнопка "Історія" є ЗАВЖДИ для всіх користувачів */}
+      <Button
+        variant="contained"
+        color="secondary"
+        size="large"
+        startIcon={<AutoStoriesIcon />}
+        onClick={onOpenStoryModal}
+        disabled={cardsCount === 0}
+        sx={{ borderRadius: 3, px: 3, textTransform: "none", fontWeight: "bold" }}
+      >
+        {t("deckDetails.btnStory")}
+      </Button>
 
+      {/* Додавання карток залишаємо власнику завжди */}
       {isEditingAllowed && (
         <Button
           variant="outlined"

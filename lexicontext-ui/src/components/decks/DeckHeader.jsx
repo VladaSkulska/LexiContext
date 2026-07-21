@@ -10,14 +10,22 @@ export const DeckHeader = ({ deck, isEditingAllowed, onEdit, onDelete }) => {
   const deckDesc = deck?.description || deck?.Description;
 
   return (
-    <Box sx={{ flex: 1 }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1, flexWrap: "wrap" }}>
-        <Typography variant="h3" fontWeight="800">
+    <Box sx={{ flex: 1, minWidth: 0 }}> {/* minWidth: 0 важливо для flex-елементів, щоб текст обрізався */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1, flexWrap: "nowrap" }}>
+        <Typography 
+          variant="h3" 
+          fontWeight="800"
+          sx={{
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap"
+          }}
+        >
           {deckTitle}
         </Typography>
         
         {isEditingAllowed && (
-          <>
+          <Box sx={{ display: "flex", flexShrink: 0 }}> {/* flexShrink: 0 гарантує, що кнопки не стискатимуться */}
             <Tooltip title={t("deckDetails.editTooltip", { defaultValue: "Редагувати" })}>
               <IconButton
                 size="small"
@@ -36,7 +44,7 @@ export const DeckHeader = ({ deck, isEditingAllowed, onEdit, onDelete }) => {
                 <DeleteIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-          </>
+          </Box>
         )}
       </Box>
       {deckDesc && (
