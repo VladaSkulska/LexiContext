@@ -31,11 +31,6 @@ namespace LexiContext.Api.Controllers
             var userId = Guid.Parse(userIdString);
             var dueCards = await _studyService.GetDueCardsAsync(deckId, userId);
 
-            if (!dueCards.Any())
-            {
-                return Ok(new { message = "You have studied all cards for today!", cards = dueCards });
-            }
-
             return Ok(dueCards);
         }
 

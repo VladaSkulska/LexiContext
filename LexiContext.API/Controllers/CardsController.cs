@@ -26,12 +26,12 @@ namespace LexiContext.API.Controllers
 
             if (string.IsNullOrEmpty(userIdString))
             {
-                throw new BadHttpRequestException("User ID не знайдено в токені. Перевірте конфігурацію клеймів.");
+                throw new BadHttpRequestException("User ID not found in token. Please check the token configuration.");
             }
 
             if (!Guid.TryParse(userIdString, out var userId))
             {
-                throw new BadHttpRequestException("User ID у токені має неправильний формат Guid.");
+                throw new BadHttpRequestException("User ID in token has incorrect format.");
             }
 
             return userId;
@@ -93,13 +93,12 @@ namespace LexiContext.API.Controllers
             return Ok(result);
         }
 
-        // ЗВЕРНИ УВАГУ: Маршрут тепер просто "review", бо ID лежить всередині DTO!
         [HttpPost("review")]
         public async Task<IActionResult> ReviewCard([FromBody] ReviewCardDto dto)
         {
             var userId = GetUserId();
             await _cardService.ReviewCardAsync(dto, userId);
-            return Ok(); // Нам не обов'язково повертати саму картку назад, достатньо статусу 200 OK
+            return Ok();
         }
     }
 }

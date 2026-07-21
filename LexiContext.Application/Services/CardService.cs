@@ -94,7 +94,7 @@ namespace LexiContext.Application.Services
 
         public async Task<List<DueCardDto>> GetCardsForStudyAsync(Guid deckId, Guid userId)
         {
-            var deck = await GetDeckOrThrowAsync(deckId, userId);
+            var deck = await GetDeckOrThrowAsync(deckId, userId, strictOwnerCheck: false);
 
             var allCards = await _cardRepository.GetByDeckIdAsync(deckId);
             var userProgresses = await _progressRepository.GetByDeckIdAsync(userId, deckId);
