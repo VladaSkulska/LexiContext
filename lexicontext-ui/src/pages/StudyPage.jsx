@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   Box,
   Container,
@@ -25,7 +25,14 @@ import { useTranslation } from "react-i18next";
 export const StudyPage = ({ isDarkMode, toggleTheme }) => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
+
+  // ВИПРАВЛЕННЯ 2: Динамічний шлях повернення. 
+  // Якщо є location.state.fromClassroom, вертаємо туди. Якщо ні - в деку.
+  // Найкраще передавати конкретний backUrl при навігації сюди.
+  const backUrl = location.state?.backUrl 
+    || (location.state?.fromClassroom ? `/classrooms/${location.state.classroomId || ''}` : `/decks/${id}`);
 
   const [cards, setCards] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -71,41 +78,43 @@ export const StudyPage = ({ isDarkMode, toggleTheme }) => {
 
   const handleFlip = () => setIsFlipped(!isFlipped);
 
+  // ВИПРАВЛЕННЯ 1: Логіка переходу ДО наступної картки ТІЛЬКИ в разі успіху запиту.
   const handleScore = async (quality) => {
     const currentCard = cards[currentIndex];
     const cardId = currentCard?.cardId || currentCard?.CardId;
     if (!cardId) return;
 
     try {
+      // Чекаємо, поки бекенд скаже ОК
       await axiosClient.post(`/Cards/review`, { cardId, quality });
-    } catch (error) {
-      console.error("Помилка збереження прогресу:", error);
-    } finally {
+      
+      // ЯКЩО МИ ТУТ, ЗНАЧИТЬ ЗАПИТ УСПІШНИЙ. Тільки тепер рухаємо фронтенд!
       const isLastCard = currentIndex === cards.length - 1;
+      
       if (quality === 1 || quality === 2) {
+        // Картка йде в кінець черги
         setCards((prevCards) => [...prevCards, currentCard]);
         setIsFlipped(false);
         setTimeout(() => setCurrentIndex((prev) => prev + 1), 150);
       } else {
-        if (isLastCard) setIsFinished(true);
-        else {
+        // Картка вивчена
+        if (isLastCard) {
+          setIsFinished(true);
+        } else {
           setIsFlipped(false);
           setTimeout(() => setCurrentIndex((prev) => prev + 1), 150);
         }
       }
+    } catch (error) {
+      // ЯКЩО БЕКЕНД ВІДМОВИВ (403, 500) — СТОЇМО НА МІСЦІ І КРИЧИМО
+      console.error("Помилка збереження прогресу:", error);
+      alert("Сталася помилка при збереженні прогресу. Перевір з'єднання або свої права доступу до цієї колоди.");
     }
   };
 
   if (isLoading) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "80vh",
-        }}
-      >
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "80vh" }}>
         <CircularProgress color="secondary" />
       </Box>
     );
@@ -113,9 +122,7 @@ export const StudyPage = ({ isDarkMode, toggleTheme }) => {
 
   if (!cards || cards.length === 0) {
     return (
-      <Box
-        sx={{ minHeight: "100vh", bgcolor: isDarkMode ? "#121212" : "#f5f5f5" }}
-      >
+      <Box sx={{ minHeight: "100vh", bgcolor: isDarkMode ? "#121212" : "#f5f5f5" }}>
         <Navbar isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
         <Container maxWidth="sm" sx={{ mt: 10, textAlign: "center" }}>
           <Typography variant="h5" gutterBottom>
@@ -124,11 +131,7 @@ export const StudyPage = ({ isDarkMode, toggleTheme }) => {
           <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
             {t("study.emptyDesc")}
           </Typography>
-          <Button
-            onClick={() => navigate(`/decks/${id}`)}
-            variant="contained"
-            sx={{ mt: 3 }}
-          >
+          <Button onClick={() => navigate(backUrl)} variant="contained" sx={{ mt: 3 }}>
             {t("study.backBtn")}
           </Button>
         </Container>
@@ -138,17 +141,12 @@ export const StudyPage = ({ isDarkMode, toggleTheme }) => {
 
   if (isFinished) {
     return (
-      <Box
-        sx={{ minHeight: "100vh", bgcolor: isDarkMode ? "#121212" : "#f5f5f5" }}
-      >
+      <Box sx={{ minHeight: "100vh", bgcolor: isDarkMode ? "#121212" : "#f5f5f5" }}>
         <Navbar isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
         <Container maxWidth="sm" sx={{ mt: 10, textAlign: "center" }}>
           <Zoom in={true}>
             <Paper elevation={3} sx={{ p: 6, borderRadius: 4 }}>
-              <CheckCircleOutlineIcon
-                color="success"
-                sx={{ fontSize: 80, mb: 2 }}
-              />
+              <CheckCircleOutlineIcon color="success" sx={{ fontSize: 80, mb: 2 }} />
               <Typography variant="h4" fontWeight="bold" gutterBottom>
                 {t("study.successTitle")}
               </Typography>
@@ -159,18 +157,10 @@ export const StudyPage = ({ isDarkMode, toggleTheme }) => {
                 <Button
                   variant="contained"
                   size="large"
-                  onClick={() => navigate(`/decks`)}
+                  onClick={() => navigate(backUrl)}
                   sx={{ borderRadius: 3 }}
                 >
-                  {t("study.allDecksBtn")}
-                </Button>
-                <Button
-                  variant="outlined"
-                  size="large"
-                  onClick={() => navigate(`/decks/${id}`)}
-                  sx={{ borderRadius: 3 }}
-                >
-                  {t("study.settingsBtn")}
+                  {location.state?.fromClassroom ? "Повернутися до класу" : t("study.allDecksBtn")}
                 </Button>
               </Stack>
             </Paper>
@@ -190,38 +180,15 @@ export const StudyPage = ({ isDarkMode, toggleTheme }) => {
   const translationText = currentCard?.contextTranslation || currentCard?.ContextTranslation || "";
   const readingText = currentCard?.contextReading || currentCard?.ContextReading || "";
 
-  // ВИПРАВЛЕНО: Шукаємо теги всюди (і на фронті, і на беку)
   const isAsianLanguage = frontText.includes("<ruby>") || backText.includes("<ruby>") || contextText.includes("<ruby>");
 
   return (
-    <Box
-      sx={{
-        height: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-        bgcolor: isDarkMode ? "#121212" : "#f5f5f5",
-      }}
-    >
+    <Box sx={{ height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden", bgcolor: isDarkMode ? "#121212" : "#f5f5f5" }}>
       <Navbar isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
-      <Container
-        maxWidth="sm"
-        sx={{
-          flexGrow: 1,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          py: 2,
-        }}
-      >
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          sx={{ mb: 3 }}
-        >
+      <Container maxWidth="sm" sx={{ flexGrow: 1, display: "flex", flexDirection: "column", justifyContent: "center", py: 2 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
           <Box sx={{ display: "flex", alignItems: "center" }}>
-            <IconButton onClick={() => navigate(`/decks/${id}`)}>
+            <IconButton onClick={() => navigate(backUrl)}>
               <CloseIcon />
             </IconButton>
             
@@ -240,111 +207,41 @@ export const StudyPage = ({ isDarkMode, toggleTheme }) => {
           </Box>
 
           <Box sx={{ flexGrow: 1, mx: 3 }}>
-            <LinearProgress
-              variant="determinate"
-              value={progress}
-              color="secondary"
-              sx={{ height: 10, borderRadius: 5 }}
-            />
+            <LinearProgress variant="determinate" value={progress} color="secondary" sx={{ height: 10, borderRadius: 5 }} />
           </Box>
           <Typography variant="body2" fontWeight="bold">
             {currentIndex + 1} / {cards.length}
           </Typography>
         </Stack>
 
-        <Box
-          onClick={handleFlip}
-          sx={{
-            perspective: "1000px",
-            height: "min(50vh, 400px)",
-            position: "relative",
-            cursor: "pointer",
-          }}
-        >
+        <Box onClick={handleFlip} sx={{ perspective: "1000px", height: "min(50vh, 400px)", position: "relative", cursor: "pointer" }}>
           <Paper
             elevation={10}
             sx={{
-              width: "100%",
-              height: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              textAlign: "center",
-              p: 4,
-              borderRadius: 6,
-              transition: "transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
-              transformStyle: "preserve-3d",
-              transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
-              bgcolor: isDarkMode ? "#1e1e1e" : "#fff",
-              border: "1px solid",
-              borderColor: "divider",
+              width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", p: 4, borderRadius: 6, transition: "transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)", transformStyle: "preserve-3d", transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)", bgcolor: isDarkMode ? "#1e1e1e" : "#fff", border: "1px solid", borderColor: "divider",
             }}
           >
-            {/* Лицьовий бік (Front) */}
-            <Box
-              sx={{ backfaceVisibility: "hidden", position: "absolute", p: 3, width: "100%" }}
-            >
-              <Typography
-                variant="h3"
-                fontWeight="900"
-                color="primary"
-                sx={{ wordBreak: "break-word", ...rubyStyle }}
-                dangerouslySetInnerHTML={{ __html: frontText }}
-              />
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mt: 4, opacity: 0.6 }}
-              >
+            <Box sx={{ backfaceVisibility: "hidden", position: "absolute", p: 3, width: "100%" }}>
+              <Typography variant="h3" fontWeight="900" color="primary" sx={{ wordBreak: "break-word", ...rubyStyle }} dangerouslySetInnerHTML={{ __html: frontText }} />
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 4, opacity: 0.6 }}>
                 {t("study.flipHint")}
               </Typography>
             </Box>
 
-            {/* Зворотний бік (Back) */}
-            <Box
-              sx={{
-                backfaceVisibility: "hidden",
-                position: "absolute",
-                transform: "rotateY(180deg)",
-                p: 3,
-                width: "100%",
-              }}
-            >
-              {/* ВИПРАВЛЕНО: Тепер backText теж рендериться як HTML з підтримкою фурігани */}
-              <Typography
-                variant="h3"
-                color="secondary"
-                fontWeight="900"
-                sx={{ wordBreak: "break-word", ...rubyStyle }}
-                dangerouslySetInnerHTML={{ __html: backText }}
-              />
+            <Box sx={{ backfaceVisibility: "hidden", position: "absolute", transform: "rotateY(180deg)", p: 3, width: "100%" }}>
+              <Typography variant="h3" color="secondary" fontWeight="900" sx={{ wordBreak: "break-word", ...rubyStyle }} dangerouslySetInnerHTML={{ __html: backText }} />
               
               {contextText && (
                 <Box sx={{ mt: 4 }}>
                   <Divider sx={{ mb: 3, width: "60%", mx: "auto" }} />
-                  
-                  {/* ВИПРАВЛЕНО: Третій рядок (читання всього речення) показується ТІЛЬКИ якщо це не азійська мова */}
                   {readingText && !isAsianLanguage && (
-                    <Typography
-                      variant="body2"
-                      color="primary"
-                      sx={{ mb: 1, letterSpacing: 1, fontWeight: "bold" }}
-                    >
+                    <Typography variant="body2" color="primary" sx={{ mb: 1, letterSpacing: 1, fontWeight: "bold" }}>
                       {readingText}
                     </Typography>
                   )}
-                  
-                  <Typography 
-                    variant="h6" 
-                    sx={{ fontWeight: 500, ...rubyStyle }}
-                    dangerouslySetInnerHTML={{ __html: contextText }}
-                  />
+                  <Typography variant="h6" sx={{ fontWeight: 500, ...rubyStyle }} dangerouslySetInnerHTML={{ __html: contextText }} />
                   {translationText && (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mt: 1, fontStyle: "italic" }}
-                    >
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontStyle: "italic" }}>
                       {translationText}
                     </Typography>
                   )}
@@ -358,49 +255,19 @@ export const StudyPage = ({ isDarkMode, toggleTheme }) => {
           {isFlipped ? (
             <Zoom in={isFlipped}>
               <Stack direction="row" spacing={2}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  color="error"
-                  size="large"
-                  onClick={() => handleScore(1)}
-                  sx={{ borderRadius: 3, py: 1.8, fontWeight: "bold" }}
-                >
+                <Button fullWidth variant="outlined" color="error" size="large" onClick={() => handleScore(1)} sx={{ borderRadius: 3, py: 1.8, fontWeight: "bold" }}>
                   {t("study.buttons.again")}
                 </Button>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  color="warning"
-                  size="large"
-                  onClick={() => handleScore(2)}
-                  sx={{
-                    borderRadius: 3,
-                    py: 1.8,
-                    fontWeight: "bold",
-                    color: "#fff",
-                  }}
-                >
+                <Button fullWidth variant="contained" color="warning" size="large" onClick={() => handleScore(2)} sx={{ borderRadius: 3, py: 1.8, fontWeight: "bold", color: "#fff" }}>
                   {t("study.buttons.hard")}
                 </Button>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  color="success"
-                  size="large"
-                  onClick={() => handleScore(3)}
-                  sx={{ borderRadius: 3, py: 1.8, fontWeight: "bold" }}
-                >
+                <Button fullWidth variant="contained" color="success" size="large" onClick={() => handleScore(3)} sx={{ borderRadius: 3, py: 1.8, fontWeight: "bold" }}>
                   {t("study.buttons.good")}
                 </Button>
               </Stack>
             </Zoom>
           ) : (
-            <Typography
-              align="center"
-              color="text.secondary"
-              sx={{ fontStyle: "italic" }}
-            >
+            <Typography align="center" color="text.secondary" sx={{ fontStyle: "italic" }}>
               {t("study.thinkHint")}
             </Typography>
           )}

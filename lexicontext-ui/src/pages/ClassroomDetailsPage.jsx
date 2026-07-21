@@ -644,16 +644,25 @@ export const ClassroomDetailsPage = ({ isDarkMode, toggleTheme }) => {
 
                 <CardActions sx={{ p: 2, pt: 0, display: "flex", flexDirection: "column", gap: 1 }}>
                   <Button
-                    fullWidth
-                    variant="contained"
-                    color="primary"
-                    startIcon={<PlayArrowIcon />}
-                    sx={{ textTransform: "none", borderRadius: 2 }}
-                    disabled={!deck.newCards && !deck.learningCards && !deck.toReview}
-                    onClick={(e) => { e.stopPropagation(); navigate(`/study/${deck.id}`); }}
-                  >
-                    {t("dashboard.studyBtn")}
-                  </Button>
+                  fullWidth
+                  variant="contained"
+                  color="primary"
+                  startIcon={<PlayArrowIcon />}
+                  sx={{ textTransform: "none", borderRadius: 2 }}
+                  disabled={!deck.newCards && !deck.learningCards && !deck.toReview}
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    navigate(`/study/${deck.id}`, { 
+                      state: { 
+                        fromClassroom: true, 
+                        classroomId: classroomId, 
+                        backUrl: `/classrooms/${classroomId}` 
+                      } 
+                    }); 
+                  }}
+                >
+                  {t("dashboard.studyBtn")}
+                </Button>
                   <Button
                     fullWidth
                     variant="outlined"
