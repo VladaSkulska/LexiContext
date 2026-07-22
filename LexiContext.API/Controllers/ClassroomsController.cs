@@ -218,20 +218,25 @@ namespace LexiContext.API.Controllers
         [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> GetHomeworkForTeacher(Guid classroomId)
         {
-                try
+            try
+            {
+                var teacherId = GetUserId();
+                var homework = await _classroomService.GetHomeworkForTeacherAsync(classroomId, teacherId);
+                return Ok(homework);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
                 {
-                    var teacherId = GetUserId();
-                    var homework = await _classroomService.GetHomeworkForTeacherAsync(classroomId, teacherId);
-                    return Ok(homework);
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    return Forbid();
-                }
-                catch (Exception)
-                {
-                    return StatusCode(500, new { message = "Internal server error." });
-                }
+                    message = ex.Message,
+                    inner = ex.InnerException?.Message,
+                    stack = ex.StackTrace
+                });
+            }
         }
 
         [HttpGet("{classroomId}/homework/student")]
