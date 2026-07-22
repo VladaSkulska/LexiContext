@@ -1,6 +1,7 @@
 ﻿using LexiContext.Application.DTOs.Classrooms;
 using LexiContext.Application.DTOs.Decks;
 using LexiContext.Application.Interfaces.Repos;
+using LexiContext.Domain.Entities.Classes;
 namespace LexiContext.Application.Services.Interfaces
 {
     public interface IClassroomService
@@ -15,8 +16,8 @@ namespace LexiContext.Application.Services.Interfaces
         Task RemoveDeckFromClassroomAsync(Guid classroomId, Guid deckId, Guid teacherId);
         Task DeleteClassroomAsync(Guid classroomId, Guid teacherId);
         Task CreateHomeworkAsync(Guid classroomId, string text, Guid teacherId);
-        Task<object> GetHomeworkForTeacherAsync(Guid classroomId, Guid teacherId);
-        Task<object> GetHomeworkForStudentAsync(Guid classroomId, Guid studentId);
+        Task<List<HomeworkSummaryDto>> GetHomeworkForTeacherAsync(Guid classroomId, Guid teacherId);
+        Task<List<StudentHomeworkDto>> GetHomeworkForStudentAsync(Guid classroomId, Guid studentId);
         Task DeleteHomeworkAsync(Guid groupTaskId, Guid teacherId);
         Task ToggleHomeworkAsync(Guid groupTaskId, Guid studentId);
     }

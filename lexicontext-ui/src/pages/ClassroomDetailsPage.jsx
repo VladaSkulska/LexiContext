@@ -500,15 +500,31 @@ export const ClassroomDetailsPage = ({ isDarkMode, toggleTheme }) => {
                 </Typography>
               ) : (
                 <List disablePadding>
-                  {tasks.map((task) => (
+                {tasks.map((task) => {
+                  const taskId = task.id || task.Id || task.groupTaskId || task.GroupTaskId;
+                  const text = task.taskText || task.TaskText || task.text;
+                  const isCompleted = task.isCompleted || task.IsCompleted || false;
+                  const date = task.createdAt || task.CreatedAt;
+                  
+                  const completedCount = task.completedCount || task.CompletedCount || 0;
+                  const totalStudents = task.totalStudents || task.TotalStudents || 0;
+
+                  return (
                     <ListItem
-                      key={task.id || task.groupTaskId}
+                      key={taskId || Math.random()}
                       secondaryAction={
                         userRole === "Teacher" ? (
                           <IconButton edge="end" size="small" onClick={() => handleDeleteTask(task)}>
                             <DeleteIcon color="error" fontSize="small" />
                           </IconButton>
-                        ) : null
+                        ) : (
+                          <Checkbox
+                            edge="end"
+                            checked={isCompleted}
+                            onChange={() => handleToggleTask(task)}
+                            color="success"
+                          />
+                        )
                       }
                       sx={{
                         bgcolor: isDarkMode ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
@@ -519,35 +535,43 @@ export const ClassroomDetailsPage = ({ isDarkMode, toggleTheme }) => {
                         },
                       }}
                     >
-                      <ListItemIcon sx={{ minWidth: 36 }}>
-                        <Checkbox
-                          edge="start"
-                          checked={task.isCompleted}
-                          onChange={() => handleToggleTask(task)}
-                          disabled={userRole === "Teacher"}
-                          color="success"
-                          size="small"
-                        />
+                      <ListItemIcon sx={{ minWidth: 40 }}>
+                        <AssignmentIcon color={isCompleted && userRole !== "Teacher" ? "success" : "primary"} />
                       </ListItemIcon>
+                      
                       <ListItemText
-                        primary={task.taskText || task.text}
-                        secondary={task.createdAt ? `${t("classroomDetails.created")} ${task.createdAt}` : null}
+                        primary={text || t("classroomDetails.emptyTask")}
+                        secondary={
+                          <Box sx={{ display: 'flex', gap: 2, mt: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>
+                            {date && (
+                              <Typography component="span" variant="caption" color="text.secondary">
+                                {`${t("classroomDetails.created")} ${new Date(date).toLocaleDateString()}`}
+                              </Typography>
+                            )}
+                            
+                            {userRole === "Teacher" && totalStudents > 0 && (
+                              <Typography component="span" variant="caption" sx={{ color: "#2196f3", fontWeight: "bold" }}>
+                                {t("classroomDetails.completedStats", { 
+                                  count: completedCount, 
+                                  total: totalStudents 
+                                })}
+                              </Typography>
+                            )}
+                          </Box>
+                        }
                         sx={{
                           "& .MuiListItemText-primary": {
-                            textDecoration: task.isCompleted ? "line-through" : "none",
-                            opacity: task.isCompleted ? 0.5 : 1,
+                            textDecoration: isCompleted && userRole !== "Teacher" ? "line-through" : "none",
+                            opacity: isCompleted && userRole !== "Teacher" ? 0.5 : 1,
                             fontWeight: 500,
                             fontSize: "0.9rem",
-                          },
-                          "& .MuiListItemText-secondary": {
-                            fontSize: "0.72rem",
-                            opacity: 0.7,
-                          },
+                          }
                         }}
                       />
                     </ListItem>
-                  ))}
-                </List>
+                  );
+                })}
+              </List>
               )}
             </Box>
           </Paper>

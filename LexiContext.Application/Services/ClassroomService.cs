@@ -129,7 +129,6 @@ namespace LexiContext.Infrastructure.Repositories
 
             var sharedDeckIds = classroom.Decks?.Select(cd => cd.DeckId).ToList() ?? new List<Guid>();
 
-            // Витягуємо всі деки за цими ID
             var sharedDecks = await _deckRepository.GetDecksByIdsAsync(sharedDeckIds);
 
             var ownedByClassDecks = await _deckRepository.GetDecksByOwnerClassroomIdAsync(classroomId);
@@ -213,36 +212,26 @@ namespace LexiContext.Infrastructure.Repositories
             await _classroomRepository.AddStudentHomeworksAsync(homeworkRecords);
         }
 
-        public async Task<object> GetHomeworkForTeacherAsync(Guid classroomId, Guid teacherId)
+        public async Task<List<HomeworkSummaryDto>> GetHomeworkForTeacherAsync(Guid classroomId, Guid teacherId)
         {
             var classroom = await _classroomRepository.GetByIdAsync(classroomId);
             if (classroom == null || classroom.TeacherId != teacherId)
                 throw new UnauthorizedAccessException("You are not the teacher of this class.");
 
-            var allHomeworks = await _classroomRepository.GetHomeworkSummaryForTeacherAsync(classroomId);
-
-            return allHomeworks.Select(h => new
-            {
-                groupTaskId = h.GroupTaskId,
-                taskText = h.TaskText,
-                createdAt = h.CreatedAt.ToString("dd.MM.yyyy"),
-                totalStudents = h.TotalStudents,
-                completedCount = h.CompletedCount,
-                isCompleted = h.IsCompleted
-            }).ToList();
+            return (await _classroomRepository.GetHomeworkSummaryForTeacherAsync(classroomId)).ToList();
         }
 
-        public async Task<object> GetHomeworkForStudentAsync(Guid classroomId, Guid studentId)
+        public async Task<List<StudentHomeworkDto>> GetHomeworkForStudentAsync(Guid classroomId, Guid studentId)
         {
             var homeworks = await _classroomRepository.GetStudentHomeworksAsync(classroomId, studentId);
 
-            return homeworks.Select(h => new
+            return homeworks.Select(h => new StudentHomeworkDto
             {
-                id = h.Id,
-                groupTaskId = h.GroupTaskId,
-                taskText = h.TaskText,
-                isCompleted = h.IsCompleted,
-                createdAt = h.CreatedAt.ToString("dd.MM.yyyy")
+                Id = h.Id,
+                GroupTaskId = h.GroupTaskId,
+                TaskText = h.TaskText,
+                IsCompleted = h.IsCompleted,
+                CreatedAt = h.CreatedAt
             }).ToList();
         }
 

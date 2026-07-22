@@ -159,7 +159,6 @@ namespace LexiContext.Application.Services
         {
             var originalDeck = await GetDeckForReadAsync(deckId, userId);
 
-            // Створюємо глибоку копію колоди (Deep Copy)
             var forkedDeck = new Deck
             {
                 Title = $"{originalDeck.Title} (Copy)",
@@ -170,8 +169,8 @@ namespace LexiContext.Application.Services
                 Tone = originalDeck.Tone,
                 DailyNewCardsLimit = originalDeck.DailyNewCardsLimit,
                 DailyReviewLimit = originalDeck.DailyReviewLimit,
-                CreatedId = userId,       // Власником стає студент
-                OwnerClassroomId = null   // Колода переходить в розряд ОСОБИСТИХ
+                CreatedId = userId,
+                OwnerClassroomId = null
             };
 
             var newDeckId = await _deckRepository.CreateAsync(forkedDeck);
