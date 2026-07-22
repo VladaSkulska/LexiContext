@@ -106,10 +106,8 @@ export const StudyPage = ({ isDarkMode, toggleTheme }) => {
         }
       }
     } catch (error) {
-      // ЯКЩО БЕКЕНД ВІДМОВИВ (403, 500) — СТОЇМО НА МІСЦІ І КРИЧИМО
       console.error("Помилка збереження прогресу:", error);
-      alert("Сталася помилка при збереженні прогресу. Перевір з'єднання або свої права доступу до цієї колоди.");
-    }
+      alert(t("study.errorSaveProgress"));    }
   };
 
   if (isLoading) {
@@ -160,7 +158,7 @@ export const StudyPage = ({ isDarkMode, toggleTheme }) => {
                   onClick={() => navigate(backUrl)}
                   sx={{ borderRadius: 3 }}
                 >
-                  {location.state?.fromClassroom ? "Повернутися до класу" : t("study.allDecksBtn")}
+                  {isFromClassroom ? t("study.backToClassBtn") : t("study.allDecksBtn")}
                 </Button>
               </Stack>
             </Paper>

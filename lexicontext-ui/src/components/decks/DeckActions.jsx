@@ -1,8 +1,9 @@
-import { Box, Button } from "@mui/material";
+import { Box, Button, CircularProgress } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import AutoStoriesIcon from "@mui/icons-material/AutoStories";
 import AddIcon from "@mui/icons-material/Add";
 import SchoolIcon from "@mui/icons-material/School";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
@@ -14,29 +15,31 @@ export const DeckActions = ({
   onOpenStoryModal,
   onOpenCardModal,
   onOpenClassroomModal,
-  fromClassroom
+  fromClassroom,
+  isForking,
+  onForkDeck
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
     <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-      {/* Кнопка Вчити є завжди */}
-      <Button
-        variant="contained"
-        size="large"
-        startIcon={<PlayArrowIcon />}
-        onClick={(e) => {
-          e.stopPropagation();
-          navigate(`/study/${deck.id}`, { state: { fromClassroom } });
-        }}
-        disabled={!deck?.newCards && !deck?.learningCards && !deck?.toReview}
-        sx={{ borderRadius: 3, px: 4, textTransform: "none", fontWeight: "bold" }}
-      >
-        {t("deckDetails.btnStudy")}
-      </Button>
+      {!(userRole === "Teacher" && fromClassroom) && (
+        <Button
+          variant="contained"
+          size="large"
+          startIcon={<PlayArrowIcon />}
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/study/${deck.id}`, { state: { fromClassroom } });
+          }}
+          disabled={!deck?.newCards && !deck?.learningCards && !deck?.toReview}
+          sx={{ borderRadius: 3, px: 4, textTransform: "none", fontWeight: "bold" }}
+        >
+          {t("deckDetails.btnStudy")}
+        </Button>
+      )}
 
-      {/* Кнопка "Історія" є ЗАВЖДИ для всіх користувачів */}
       <Button
         variant="contained"
         color="secondary"
@@ -49,7 +52,20 @@ export const DeckActions = ({
         {t("deckDetails.btnStory")}
       </Button>
 
-      {/* Додавання карток залишаємо власнику завжди */}
+      {fromClassroom && userRole === "Student" && !isEditingAllowed && (
+        <Button
+          variant="outlined"
+          color="info"
+          size="large"
+          startIcon={isForking ? <CircularProgress size={20} /> : <ContentCopyIcon />}
+          onClick={onForkDeck}
+          disabled={isForking}
+          sx={{ borderRadius: 3, px: 3, textTransform: "none", fontWeight: "bold" }}
+        >
+          {t("deckDetails.btnFork", "Copy to My Decks")}
+        </Button>
+      )}
+
       {isEditingAllowed && (
         <Button
           variant="outlined"
@@ -63,7 +79,6 @@ export const DeckActions = ({
         </Button>
       )}
 
-      {/* Кнопку "Додати до класу" ховаємо, якщо ми ВЖЕ в класі */}
       {userRole === "Teacher" && isEditingAllowed && !fromClassroom && (
         <Button
           variant="outlined"

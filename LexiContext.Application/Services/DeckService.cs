@@ -2,7 +2,7 @@
 using LexiContext.Application.DTOs.Decks;
 using LexiContext.Application.Services.Interfaces;
 using LexiContext.Domain.Entities;
-using LexiContext.Domain.Entities.Classes; // Переконайся, що простір назв для ClassroomDeck правильний
+using LexiContext.Domain.Entities.Classes;
 using LexiContext.Domain.Exceptions;
 using FluentValidation;
 using LexiContext.Application.Interfaces.Repos;
@@ -212,11 +212,11 @@ namespace LexiContext.Application.Services
 
         private static (int New, int Learning, int Review) CalculateStats(int totalCards, List<UserCardProgress> progresses)
         {
-            var now = DateTime.UtcNow;
+            var endOfToday = DateTime.UtcNow.Date.AddDays(1).AddTicks(-1);
 
             int newCards = Math.Max(0, totalCards - progresses.Count);
-            int learningCards = progresses.Count(p => p.IntervalDays == 0 && p.NextReviewAt <= now);
-            int toReview = progresses.Count(p => p.IntervalDays > 0 && p.NextReviewAt <= now);
+            int learningCards = progresses.Count(p => p.IntervalDays == 0 && p.NextReviewAt <= endOfToday);
+            int toReview = progresses.Count(p => p.IntervalDays > 0 && p.NextReviewAt <= endOfToday);
 
             return (newCards, learningCards, toReview);
         }

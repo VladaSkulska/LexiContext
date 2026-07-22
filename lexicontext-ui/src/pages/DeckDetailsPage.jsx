@@ -44,6 +44,7 @@ export const DeckDetailsPage = ({ isDarkMode, toggleTheme }) => {
   const [isSavingDeck, setIsSavingDeck] = useState(false);
   const [deckError, setDeckError] = useState("");
   const [isGeneratingStory, setIsGeneratingStory] = useState(false);
+  const [isForking, setIsForking] = useState(false);
 
   const [simplifyingId, setSimplifyingId] = useState(null);
   const [generatingId, setGeneratingId] = useState(null);
@@ -83,13 +84,10 @@ export const DeckDetailsPage = ({ isDarkMode, toggleTheme }) => {
         const cardsRes = await axiosClient.get(`/Cards/deck/${id}`);
         setCards(cardsRes.data);
       } catch (cardError) {
-        console.error("Помилка завантаження карток (500):", cardError);
         setPageError("Колоду завантажено, але бекенд не зміг віддати картки (Помилка 500).");
         setCards([]); 
       }
-
     } catch (error) {
-      console.error("Помилка завантаження колоди:", error);
       setPageError(extractErrorMessage(error));
     } finally {
       setIsLoading(false);
@@ -218,15 +216,25 @@ export const DeckDetailsPage = ({ isDarkMode, toggleTheme }) => {
     }
   };
 
+  const handleForkDeck = async () => {
+    setIsForking(true);
+    setPageError("");
+    try {
+      const response = await axiosClient.post(`/Decks/${id}/fork`);
+      navigate(`/decks/${response.data.id}`);
+    } catch (error) {
+      setPageError(extractErrorMessage(error));
+    } finally {
+      setIsForking(false);
+    }
+  };
+
   const isEditingAllowed = Boolean(
     deck && 
     currentUserId && 
     (deck.createdId === currentUserId || deck.CreatedId === currentUserId)
   );
 
-  // ВИРІШУЄМО, ЩО ПІДСВІЧУВАТИ:
-  // Якщо студент і не власник -> це точно з класу.
-  // Якщо перейшли сюди з ClassroomDetailsPage -> state.fromClassroom буде true
   const isFromClassroom = (userRole === "Student" && !isEditingAllowed) || location.state?.fromClassroom;
   
   const goBackPath = isFromClassroom ? "/classrooms" : "/decks";
@@ -241,7 +249,6 @@ export const DeckDetailsPage = ({ isDarkMode, toggleTheme }) => {
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: isDarkMode ? "#121212" : "#f9f9f9" }}>
-      {/* ПЕРЕДАЄМО overrideActivePath */}
       <Navbar 
         isDarkMode={isDarkMode} 
         toggleTheme={toggleTheme} 
@@ -279,9 +286,11 @@ export const DeckDetailsPage = ({ isDarkMode, toggleTheme }) => {
             isEditingAllowed={isEditingAllowed}
             userRole={userRole}
             fromClassroom={isFromClassroom}
+            isForking={isForking}
             onOpenStoryModal={() => { setOpenStoryModal(true); setPageError(""); }}
             onOpenCardModal={() => { setOpenCardModal(true); setCardError(""); }}
             onOpenClassroomModal={() => setOpenClassroomModal(true)}
+            onForkDeck={handleForkDeck}
           />
         </Paper>
 

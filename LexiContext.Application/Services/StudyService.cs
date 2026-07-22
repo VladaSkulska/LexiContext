@@ -39,13 +39,13 @@ namespace LexiContext.Application.Services
             var userProgress = await _progressRepository.GetByDeckIdAsync(userId, deckId);
 
             var dueCards = new List<DueCardDto>();
-            var now = DateTime.UtcNow;
+            var endOfToday = DateTime.UtcNow.Date.AddDays(1).AddTicks(-1);
 
             foreach (var card in allCards)
             {
                 var progress = userProgress.FirstOrDefault(p => p.CardId == card.Id);
 
-                if (progress == null || progress.NextReviewAt <= now)
+                if (progress == null || progress.NextReviewAt <= endOfToday)
                 {
                     dueCards.Add(new DueCardDto
                     {
