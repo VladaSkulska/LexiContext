@@ -375,7 +375,6 @@ export const ClassroomDetailsPage = ({ isDarkMode, toggleTheme }) => {
           </Box>
         </Box>
 
-        {/* ── Top Section: Overview & Homework ── */}
         <Box
           sx={{
             display: "grid",
@@ -490,16 +489,16 @@ export const ClassroomDetailsPage = ({ isDarkMode, toggleTheme }) => {
             )}
 
             <Box sx={{ flexGrow: 1, overflowY: "auto", pr: 0.5 }}>
-              {isLoadingTasks ? (
-                <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-                  <CircularProgress size={24} color="primary" />
-                </Box>
-              ) : tasks.length === 0 ? (
-                <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 4 }}>
-                  {t("classroomDetails.noTasks")}
-                </Typography>
-              ) : (
-                <List disablePadding>
+            {isLoadingTasks ? (
+              <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+                <CircularProgress size={24} color="primary" />
+              </Box>
+            ) : tasks.length === 0 ? (
+              <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 4 }}>
+                {t("classroomDetails.noTasks")}
+              </Typography>
+            ) : (
+              <List disablePadding>
                 {tasks.map((task) => {
                   const taskId = task.id || task.Id || task.groupTaskId || task.GroupTaskId;
                   const text = task.taskText || task.TaskText || task.text;
@@ -523,6 +522,7 @@ export const ClassroomDetailsPage = ({ isDarkMode, toggleTheme }) => {
                             checked={isCompleted}
                             onChange={() => handleToggleTask(task)}
                             color="success"
+                            size="small"
                           />
                         )
                       }
@@ -572,12 +572,11 @@ export const ClassroomDetailsPage = ({ isDarkMode, toggleTheme }) => {
                   );
                 })}
               </List>
-              )}
-            </Box>
+            )}
+          </Box>
           </Paper>
         </Box>
 
-        {/* ── Classroom Materials Section ── */}
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3, flexWrap: "wrap", gap: 2 }}>
           <Typography variant="h5" fontWeight="bold">
             {t("classroomDetails.materials")}
@@ -717,7 +716,6 @@ export const ClassroomDetailsPage = ({ isDarkMode, toggleTheme }) => {
         )}
       </Container>
 
-      {/* ── КАСТОМНИЙ ДІАЛОГ ДЛЯ ПІДТВЕРДЖЕННЯ ВИДАЛЕННЯ ── */}
       <DeleteConfirmDialog
         open={confirmDialog.open}
         onClose={() => setConfirmDialog({ ...confirmDialog, open: false })}
