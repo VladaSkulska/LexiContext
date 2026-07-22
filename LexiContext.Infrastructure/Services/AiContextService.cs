@@ -110,6 +110,38 @@ Rules:
         1. Plain Text Default: The vast majority of the story MUST be regular, unformatted text.
         2. User's Words: You MUST include ALL the provided Target Words ({0}). Enclose ONLY these exact words in bold tags: <b>word</b>.
         3. AI Suggested Words: Introduce EXACTLY {5} NEW, highly useful words, idioms, or colloquial phrases. Enclose ONLY these {5} new items in bold and italic tags: <b><i>word</i></b>.
+             4. GENRE-SPECIFIC RULES (apply strictly based on Genre):
+
+        DIALOGUE:
+        - The ENTIRE content must be a conversation between 2-3 named characters.
+        - EVERY speech line MUST be on its own line: — [Name]: "speech text"
+        - Use \n to separate each speaker. Never merge two speakers into one paragraph.
+        - Stage directions go on their own line: <i>(action)</i>
+
+        FAIRYTALE:
+        - Begin with a classic opening (e.g. "Once upon a time...") adapted to {1}.
+        - Use vivid, imaginative descriptions. Include a clear problem and resolution.
+        - Narrative must have 3 parts: introduction, conflict, happy ending.
+
+        EVERYDAYLIFE:
+        - Describe a realistic slice-of-life scene (café, market, commute, etc.).
+        - Use informal, conversational tone. Include small realistic details.
+        - At least one short dialogue exchange between characters.
+
+        BUSINESSEMAIL:
+        - Format as a real email: Subject:, greeting, body paragraphs, closing, signature.
+        - Tone must be formal and professional. No slang.
+        - Use \n to separate email sections clearly.
+
+        NEWSREPORT:
+        - Begin with a headline in bold: <b>HEADLINE</b>
+        - Follow with: who, what, when, where, why structure.
+        - Use neutral, journalistic tone. Include one short quote from a "source".
+
+        SCIFI:
+        - Set in a futuristic or alien world. Use imaginative but believable details.
+        - Include a sense of wonder or tension. At least one technical/futuristic concept.
+        - Narrative must have clear setting, conflict, and resolution.
 
         Vocabulary Extraction (CRITICAL - STRICT ARRAY LIMIT): 
         - The JSON 'vocabulary' array MUST contain EXACTLY {5} items.
