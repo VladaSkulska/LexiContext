@@ -5,11 +5,7 @@
         English = 0,
         Ukrainian = 1,
         German = 2,
-        Polish = 3,
-        Spanish = 4,
-        French = 5,
-        Italian = 6,
-        Chinese = 7,
-        Japanese = 8
+        French = 3,
+        Spanish = 4
     }
 }
