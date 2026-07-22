@@ -59,7 +59,7 @@ export const BasicInfoSection = ({
           name="targetLanguage"
           label={t("modals.createDeck.targetLang")}
           fullWidth
-          value={formData.targetLanguage}
+          value={Number(formData.targetLanguage)}
           onChange={handleChange}
           disabled={isSaving}
           sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3 } }}
@@ -77,7 +77,7 @@ export const BasicInfoSection = ({
           name="nativeLanguage"
           label={t("modals.createDeck.nativeLang")}
           fullWidth
-          value={formData.nativeLanguage}
+          value={Number(formData.nativeLanguage)}
           onChange={handleChange}
           disabled={isSaving}
           sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3 } }}

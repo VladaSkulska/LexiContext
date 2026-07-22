@@ -36,19 +36,20 @@ export const CreateDeckModal = ({ open, onClose, onSubmit, isSaving, limitLangua
   const [serverError, setServerError] = useState("");
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        type === "checkbox"
-          ? checked
-          : type === "number"
-            ? Number(value)
-            : value,
-    }));
-    if (name === "title" && value.trim() !== "") setValidationError(false);
-    setServerError("");
-  };
+  const { name, value, type, checked } = e.target;
+  const parsed = Number(value);
+  setFormData((prev) => ({
+    ...prev,
+    [name]:
+      type === "checkbox"
+        ? checked
+        : !isNaN(parsed) && value !== ""
+        ? parsed
+        : value,
+  }));
+  if (name === "title" && value.trim() !== "") setValidationError(false);
+  setServerError("");
+};
 
   const handleSubmit = async () => {
     if (formData.title.trim() === "") {
