@@ -54,14 +54,16 @@ export const ClassroomsPage = ({ isDarkMode, toggleTheme }) => {
   }, [userRole, location.state?.refresh]);
 
   const handleAction = async () => {
-    if (!inputValue.trim()) return;
+    const safeInputValue = String(inputValue || "").trim();
+    if (!safeInputValue) return;
+    
     setIsSubmitting(true);
 
     try {
       if (userRole === "Teacher") {
-        await axiosClient.post("/Classrooms", { name: inputValue, description: "" });
+        await axiosClient.post("/Classrooms", { name: safeInputValue, description: "" });
       } else {
-        await axiosClient.post("/Classrooms/join", { joinCode: inputValue });
+        await axiosClient.post("/Classrooms/join", { joinCode: safeInputValue });
       }
       setInputValue("");
       const endpoint = userRole === "Teacher" ? "/Classrooms/teacher" : "/Classrooms/student";
@@ -72,12 +74,12 @@ export const ClassroomsPage = ({ isDarkMode, toggleTheme }) => {
       let rawError = extractErrorMessage(error);
       
       if (rawError.includes("was not found") || rawError.includes("Entity") || rawError.includes("classroom_not_found")) {
-    rawError = t("classrooms.errors.notFound");
-    } else if (rawError.includes("already enrolled") || rawError.includes("already joined")) {
+        rawError = t("classrooms.errors.notFound");
+      } else if (rawError.includes("already enrolled") || rawError.includes("already joined")) {
         rawError = t("classrooms.errors.alreadyJoined");
-    } else if (rawError.includes("teacher cannot be a student")) {
+      } else if (rawError.includes("teacher cannot be a student")) {
         rawError = t("classrooms.errors.teacherConflict");
-    }
+      }
 
       setSnackbar({
         open: true,
@@ -112,7 +114,7 @@ export const ClassroomsPage = ({ isDarkMode, toggleTheme }) => {
               color={userRole === "Teacher" ? "secondary" : "primary"}
               startIcon={userRole === "Teacher" ? <AddIcon /> : <LoginIcon />}
               onClick={handleAction}
-              disabled={isSubmitting || !inputValue.trim()}
+              disabled={isSubmitting || !String(inputValue).trim()}
               sx={{ textTransform: "none", borderRadius: 2, fontWeight: "bold", height: "40px" }}
             >
               {userRole === "Teacher" ? t("classrooms.btnCreate") : t("classrooms.btnJoin")}

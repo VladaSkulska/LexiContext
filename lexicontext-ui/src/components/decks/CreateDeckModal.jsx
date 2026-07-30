@@ -27,7 +27,7 @@ export const CreateDeckModal = ({ open, onClose, onSubmit, isSaving, limitLangua
     nativeLanguage: 1,
     proficiencyLevel: 0,
     tone: 0,
-    isPublic: false, // Залишаємо для сумісності з DTO бекенду, але в UI цього більше нема
+    isPublic: false,
     dailyNewCardsLimit: 20,
     dailyReviewLimit: 50,
   });
@@ -36,30 +36,56 @@ export const CreateDeckModal = ({ open, onClose, onSubmit, isSaving, limitLangua
   const [serverError, setServerError] = useState("");
 
   const handleChange = (e) => {
-  const { name, value, type, checked } = e.target;
-  const parsed = Number(value);
-  setFormData((prev) => ({
-    ...prev,
-    [name]:
-      type === "checkbox"
-        ? checked
-        : !isNaN(parsed) && value !== ""
-        ? parsed
-        : value,
-  }));
-  if (name === "title" && value.trim() !== "") setValidationError(false);
-  setServerError("");
-};
+    const { name, value, type, checked } = e.target;
+    const isTextField = name === "title" || name === "description";
+    const parsed = Number(value);
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]:
+        type === "checkbox"
+          ? checked
+          : isTextField
+          ? String(value)
+          : !isNaN(parsed) && value !== ""
+          ? parsed
+          : value,
+    }));
+
+    if (name === "title" && String(value).trim() !== "") {
+      setValidationError(false);
+    }
+    setServerError("");
+  };
 
   const handleSubmit = async () => {
-    if (formData.title.trim() === "") {
+    // Безпечне отримання рядка та очищення пробілів
+    const safeTitle = String(formData.title || "").trim();
+    const safeDescription = String(formData.description || "").trim();
+
+    if (safeTitle === "") {
       setValidationError(true);
+      // Використовуємо локалізоване повідомлення з i18next
+      setServerError(t("modals.errors.titleRequired"));
       return;
     }
     setServerError("");
 
+    const payload = {
+      ...formData,
+      title: safeTitle,
+      description: safeDescription,
+      targetLanguage: Number(formData.targetLanguage),
+      nativeLanguage: Number(formData.nativeLanguage),
+      proficiencyLevel: Number(formData.proficiencyLevel),
+      tone: Number(formData.tone),
+      dailyNewCardsLimit: Number(formData.dailyNewCardsLimit) || 20,
+      dailyReviewLimit: Number(formData.dailyReviewLimit) || 50,
+      classroomId: classroomId ? classroomId : null,
+    };
+
     try {
-      await onSubmit({ ...formData, classroomId });
+      await onSubmit(payload);
     } catch (err) {
       setServerError(extractErrorMessage(err));
     }

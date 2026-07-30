@@ -11,16 +11,16 @@
     "clickToCopy": "Click to copy"
   },
   "navbar": {
-  "myDecks": "My Decks",
-  "classrooms": "Classrooms",
-  "stories": "Stories",
-  "statistics": "Statistics",
-  "logout": "Logout",
-  "switchToStudent": "Switch to Student mode",
-  "switchToTeacher": "Switch to Teacher mode",
-  "studentMode": "Student Mode",
-  "teacherMode": "Teacher Mode"
-},
+    "myDecks": "My Decks",
+    "classrooms": "Classrooms",
+    "stories": "Stories",
+    "statistics": "Statistics",
+    "logout": "Logout",
+    "switchToStudent": "Switch to Student mode",
+    "switchToTeacher": "Switch to Teacher mode",
+    "studentMode": "Student Mode",
+    "teacherMode": "Teacher Mode"
+  },
   "statistics": {
     "title": "Learning Statistics",
     "activity": {
@@ -88,7 +88,7 @@
       "Almost there! Grab a coffee, the story is on its way...",
       "Searching for inspiration in the dictionaries..."
     ]
-},
+  },
   "storyReader": {
     "created": "Created:",
     "deleteBtn": "Delete Story",
@@ -109,15 +109,17 @@
     "deleteError": "Failed to delete the story."
   },
   "study": {
-    "emptyTitle": "There are no cards to study in this deck today. 📭",
+    "emptyTitle": "There are no cards to study in this deck today. \ud83d\udceb",
     "emptyDesc": "You have already reviewed all available words, or the deck is empty.",
     "backBtn": "Back to Deck",
-    "successTitle": "Great job! 🎉",
+    "backToClassBtn": "Back to Classroom",
+    "successTitle": "Great job! \ud83c\udf89",
     "successDesc": "You have completed all scheduled cards for today.",
     "allDecksBtn": "To All Decks",
     "settingsBtn": "Deck Settings",
     "flipHint": "Click to flip",
     "thinkHint": "Think about the translation before revealing the card",
+    "errorSaveProgress": "An error occurred while saving progress. Check your connection or access rights to this deck.",
     "buttons": { "again": "AGAIN", "hard": "HARD", "good": "GOOD" }
   },
   "deckDetails": {
@@ -198,11 +200,22 @@
       "messagePart2": "? All cards, generated sentences, and your progress will be permanently lost."
     },
     "errors": {
+      "titleRequired": "Deck name is required.",
+      "frontRequired": "Original word or phrase is required.",
       "aiServiceOverloaded": "The story generation service is currently overloaded. Please try again in 1-2 minutes.",
       "noServerResponse": "Could not connect to the server. Please check if the backend is running.",
       "timeout": "Response timeout. The AI is taking too long to reply.",
       "unknown": "An error occurred. Please try again later."
     }
+  },
+  "alerts": {
+    "taskAdded": "Task added successfully!",
+    "taskError": "Failed to add task.",
+    "taskDeleted": "Task deleted successfully!",
+    "deckCreated": "Deck created successfully!",
+    "deckUpdated": "Deck updated successfully!",
+    "cardAdded": "Card added successfully!",
+    "cardDeleted": "Card deleted successfully!"
   },
   "classrooms": {
     "titleTeacher": "My Classrooms",
@@ -217,10 +230,10 @@
     "studentsCount": "Students:",
     "decksCount": "Decks:",
     "errors": {
-    "notFound": "Classroom not found. Check the code.",
-    "alreadyJoined": "You have already joined this class.",
-    "teacherConflict": "A teacher cannot be a student in their own class."
-}
+      "notFound": "Classroom not found. Check the code.",
+      "alreadyJoined": "You have already joined this class.",
+      "teacherConflict": "A teacher cannot be a student in their own class."
+    }
   },
   "classroomDetails": {
     "loading": "Loading...",

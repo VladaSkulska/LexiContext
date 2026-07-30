@@ -18,7 +18,7 @@ export const AddCardModal = ({
   onClose,
   onSubmit,
   isSaving,
-  serverError,
+  serverError: externalServerError,
 }) => {
   const { t } = useTranslation();
 
@@ -28,12 +28,37 @@ export const AddCardModal = ({
     generateAiContext: true,
   });
 
+  const [localError, setLocalError] = useState("");
+  const errorToDisplay = localError || externalServerError;
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    const isTextField = name === "front" || name === "back";
+    
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === "checkbox" 
+        ? checked 
+        : (isTextField ? String(value) : value),
     }));
+    
+    if (localError) setLocalError("");
+  };
+
+  const handleSubmit = () => {
+    const safeFront = String(formData.front || "").trim();
+    const safeBack = String(formData.back || "").trim();
+
+    if (!safeFront) {
+      setLocalError(t("modals.errors.frontRequired"));
+      return;
+    }
+
+    onSubmit({
+      ...formData,
+      front: safeFront,
+      back: safeBack,
+    });
   };
 
   return (
@@ -49,9 +74,9 @@ export const AddCardModal = ({
       </DialogTitle>
 
       <DialogContent>
-        {serverError && (
+        {errorToDisplay && (
           <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
-            {serverError}
+            {errorToDisplay}
           </Alert>
         )}
 
@@ -97,9 +122,8 @@ export const AddCardModal = ({
           {t("common.cancel")}
         </Button>
 
-        {/* Замінено на LoadingButton */}
         <LoadingButton
-          onClick={() => onSubmit(formData)}
+          onClick={handleSubmit}
           loading={isSaving}
           loadingPosition="start"
           startIcon={<SaveIcon />}

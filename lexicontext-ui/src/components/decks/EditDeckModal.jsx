@@ -36,9 +36,13 @@ export const EditDeckModal = ({
 
   const handleChange = (e) => {
     const { name, value, type } = e.target;
+    const isTextField = name === "title" || name === "description";
+    
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "number" ? Number(value) : value,
+      [name]: type === "number" 
+        ? Number(value) 
+        : (isTextField ? String(value) : value),
     }));
   };
 
@@ -50,6 +54,21 @@ export const EditDeckModal = ({
     }));
   };
 
+  const handleSubmit = () => {
+    const safeTitle = String(formData.title || "").trim();
+    const safeDescription = String(formData.description || "").trim();
+
+    if (!safeTitle) return;
+
+    onSubmit({
+      ...formData,
+      title: safeTitle,
+      description: safeDescription,
+      dailyNewCardsLimit: Number(formData.dailyNewCardsLimit) || 20,
+      dailyReviewLimit: Number(formData.dailyReviewLimit) || 50,
+    });
+  };
+
   return (
     <Dialog
       open={open}
@@ -59,7 +78,7 @@ export const EditDeckModal = ({
       PaperProps={{ sx: { borderRadius: 4 } }}
     >
       <DialogTitle sx={{ fontWeight: "bold" }}>
-        {t("modals.editDeck.title", "Налаштування колоди")}
+        {t("modals.editDeck.title")}
       </DialogTitle>
 
       <DialogContent>
@@ -116,10 +135,7 @@ export const EditDeckModal = ({
               {t("modals.createDeck.limitsTitle")}
             </Typography>
             <Tooltip
-              title={t(
-                "modals.editDeck.limitsTooltip",
-                "Рекомендуємо 15-20 нових слів та 50-100 повторень на день.",
-              )}
+              title={t("modals.editDeck.limitsTooltip")}
               arrow
               placement="top"
             >
@@ -143,7 +159,7 @@ export const EditDeckModal = ({
               "&:hover": { opacity: 1 },
             }}
           >
-            {t("modals.editDeck.resetBtn", "Скинути")}
+            {t("modals.editDeck.resetBtn")}
           </Button>
         </Box>
 
@@ -152,7 +168,7 @@ export const EditDeckModal = ({
             <TextField
               label={t("modals.createDeck.newCardsLimit")}
               name="dailyNewCardsLimit"
-              helperText={`${t("modals.createDeck.recommended", "Рекомендовано:")} 20`}
+              helperText={`${t("modals.createDeck.recommended")} 20`}
               type="number"
               fullWidth
               variant="outlined"
@@ -167,7 +183,7 @@ export const EditDeckModal = ({
             <TextField
               label={t("modals.createDeck.reviewLimit")}
               name="dailyReviewLimit"
-              helperText={`${t("modals.createDeck.recommended", "Рекомендовано:")} 50`}
+              helperText={`${t("modals.createDeck.recommended")} 50`}
               type="number"
               fullWidth
               variant="outlined"
@@ -191,15 +207,13 @@ export const EditDeckModal = ({
           {t("common.cancel")}
         </Button>
         <Button
-          onClick={() => onSubmit(formData)}
+          onClick={handleSubmit}
           variant="contained"
           color="primary"
           sx={{ borderRadius: 2, px: 3, fontWeight: "bold" }}
           disabled={!formData.title || isSaving}
         >
-          {isSaving
-            ? t("common.saving")
-            : t("modals.editDeck.saveBtn", "Зберегти зміни")}
+          {isSaving ? t("common.saving") : t("modals.editDeck.saveBtn")}
         </Button>
       </DialogActions>
     </Dialog>
