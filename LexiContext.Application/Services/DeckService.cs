@@ -56,6 +56,16 @@ namespace LexiContext.Application.Services
             var createdId = await _deckRepository.CreateAsync(deckEntity);
             deckEntity.Id = createdId;
 
+            if (dto.ClassroomId.HasValue)
+            {
+                var classroomDeck = new ClassroomDeck
+                {
+                    ClassroomId = dto.ClassroomId.Value,
+                    DeckId = createdId
+                };
+                await _classroomRepository.AddDeckAsync(classroomDeck);
+            }
+
             return MapToDeckDto(deckEntity, 0, 0, 0);
         }
 
