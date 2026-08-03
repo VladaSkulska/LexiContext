@@ -111,7 +111,6 @@ builder.Services.AddScoped<IExternalAuthProvider, GoogleAuthProvider>();
 builder.Services.AddScoped<IJwtProvider, JwtService>();
 builder.Services.AddScoped<AuthService>();
 
-// НАЛАШТУВАННЯ CORS: Дозволяємо твій локальний React та додаємо підтримку Credentials (для Google Auth)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp",
@@ -129,7 +128,6 @@ var app = builder.Build();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseRouting();
 
-// ВАЖЛИВО: КОРС має стояти строго тут — після UseRouting, але ПЕРЕД авторизацією!
 app.UseCors("AllowReactApp");
 
 if (app.Environment.IsDevelopment())

@@ -174,11 +174,20 @@ namespace LexiContext.Infrastructure.Repositories
             if (classroom == null || classroom.TeacherId != teacherId)
                 throw new UnauthorizedAccessException("You do not have access to this class.");
 
-            bool isDeckAttached = await _classroomRepository.IsDeckInClassroomAsync(classroomId, deckId);
-            if (!isDeckAttached)
-                throw new InvalidOperationException("This deck is not attached to the class.");
+            var deck = await _deckRepository.GetByIdAsync(deckId);
 
-            await _classroomRepository.RemoveDeckWithProgressAsync(classroomId, deckId);
+            if (deck != null && deck.OwnerClassroomId == classroomId)
+            {
+                await _deckRepository.DeleteAsync(deck);
+            }
+            else
+            {
+                bool isDeckAttached = await _classroomRepository.IsDeckInClassroomAsync(classroomId, deckId);
+                if (!isDeckAttached)
+                    throw new InvalidOperationException("This deck is not attached to the class.");
+
+                await _classroomRepository.RemoveDeckWithProgressAsync(classroomId, deckId);
+            }
         }
 
         public async Task DeleteClassroomAsync(Guid classroomId, Guid teacherId)
