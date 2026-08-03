@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -17,23 +17,44 @@ import { BasicInfoSection } from "./sections/BasicInfoSection";
 import { LimitsSection } from "./sections/LimitsSection";
 import { AiSettingsSection } from "./sections/AiSettingsSection";
 
-export const CreateDeckModal = ({ open, onClose, onSubmit, isSaving, limitLanguages, classroomId = null }) => {
+const INITIAL_FORM_STATE = {
+  title: "",
+  description: "",
+  targetLanguage: 0,
+  nativeLanguage: 1,
+  proficiencyLevel: 0,
+  tone: 0,
+  isPublic: false,
+  dailyNewCardsLimit: 20,
+  dailyReviewLimit: 50,
+};
+
+export const CreateDeckModal = ({
+  open,
+  onClose,
+  onSubmit,
+  isSaving,
+  limitLanguages,
+  classroomId = null,
+}) => {
   const { t } = useTranslation();
 
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    targetLanguage: 0,
-    nativeLanguage: 1,
-    proficiencyLevel: 0,
-    tone: 0,
-    isPublic: false,
-    dailyNewCardsLimit: 20,
-    dailyReviewLimit: 50,
-  });
-
+  const [formData, setFormData] = useState(INITIAL_FORM_STATE);
   const [validationError, setValidationError] = useState(false);
   const [serverError, setServerError] = useState("");
+
+  const resetForm = useCallback(() => {
+    setFormData(INITIAL_FORM_STATE);
+    setValidationError(false);
+    setServerError("");
+  }, []);
+
+  // Автоматичне очищення форми при будь-якій зміні видимості модалки (відкритті/закритті)
+  useEffect(() => {
+    if (open) {
+      resetForm();
+    }
+  }, [open, resetForm]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -59,13 +80,11 @@ export const CreateDeckModal = ({ open, onClose, onSubmit, isSaving, limitLangua
   };
 
   const handleSubmit = async () => {
-    // Безпечне отримання рядка та очищення пробілів
     const safeTitle = String(formData.title || "").trim();
     const safeDescription = String(formData.description || "").trim();
 
     if (safeTitle === "") {
       setValidationError(true);
-      // Використовуємо локалізоване повідомлення з i18next
       setServerError(t("modals.errors.titleRequired"));
       return;
     }
@@ -86,25 +105,14 @@ export const CreateDeckModal = ({ open, onClose, onSubmit, isSaving, limitLangua
 
     try {
       await onSubmit(payload);
+      resetForm();
     } catch (err) {
       setServerError(extractErrorMessage(err));
     }
   };
 
   const handleClose = () => {
-    setFormData({
-      title: "",
-      description: "",
-      targetLanguage: 0,
-      nativeLanguage: 1,
-      proficiencyLevel: 0,
-      tone: 0,
-      isPublic: false,
-      dailyNewCardsLimit: 20,
-      dailyReviewLimit: 50,
-    });
-    setValidationError(false);
-    setServerError("");
+    resetForm();
     onClose();
   };
 
