@@ -178,6 +178,8 @@ namespace LexiContext.Infrastructure.Repositories
 
             if (deck != null && deck.OwnerClassroomId == classroomId)
             {
+                await _classroomRepository.RemoveDeckWithProgressAsync(classroomId, deckId);
+
                 await _deckRepository.DeleteAsync(deck);
             }
             else
