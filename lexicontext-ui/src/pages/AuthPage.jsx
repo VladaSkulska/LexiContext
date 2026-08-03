@@ -82,6 +82,7 @@ export const AuthPage = () => {
             useOneTap={false}
             shape="rectangular"
             theme="outline"
+            ux_mode="redirect"
           />
           <Typography
             variant="body2"
