@@ -10,6 +10,7 @@ import {
   Box,
   TextField,
   Fade,
+  CircularProgress,
 } from "@mui/material";
 import AutoStoriesIcon from "@mui/icons-material/AutoStories";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
@@ -87,8 +88,15 @@ export const GenerateStoryModal = ({ open, onClose, onSubmit, isGenerating }) =>
           <Button onClick={onClose} color="inherit" disabled={isGenerating} sx={{ borderRadius: 2, flex: 1 }}>
             {t("common.cancel")}
           </Button>
-          <Button onClick={() => onSubmit(genre)} loading={isGenerating} variant="contained" color="secondary" sx={{ borderRadius: 2, flex: 1, fontWeight: "bold" }}>
-            {t("common.generate")}
+          <Button 
+            onClick={() => onSubmit(genre)} 
+            disabled={isGenerating}
+            variant="contained" 
+            color="secondary" 
+            startIcon={isGenerating ? <CircularProgress size={18} color="inherit" /> : <AutoFixHighIcon />}
+            sx={{ borderRadius: 2, flex: 1, fontWeight: "bold" }}
+          >
+            {isGenerating ? t("common.generating", "Generating...") : t("common.generate")}
           </Button>
         </Box>
       </DialogActions>
