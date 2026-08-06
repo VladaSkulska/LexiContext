@@ -271,6 +271,7 @@ export const DeckDetailsPage = ({ isDarkMode, toggleTheme }) => {
             isEditingAllowed={isEditingAllowed}
             userRole={userRole}
             fromClassroom={isFromClassroom}
+            classroomId={location.state?.classroomId}
             isForking={isForking}
             onOpenStoryModal={() => { setOpenStoryModal(true); setPageError(""); }}
             onOpenCardModal={() => { setOpenCardModal(true); setCardError(""); }}

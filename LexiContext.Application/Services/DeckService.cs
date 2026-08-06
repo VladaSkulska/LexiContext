@@ -147,17 +147,16 @@ namespace LexiContext.Application.Services
             if (deckEntity.CreatedId == userId)
                 return deckEntity;
 
+            var studentClassrooms = await _classroomRepository.GetStudentClassroomsAsync(userId);
+
             if (deckEntity.OwnerClassroomId.HasValue)
             {
-                var studentClassrooms = await _classroomRepository.GetStudentClassroomsAsync(userId);
                 bool isStudentInClass = studentClassrooms.Any(c => c.Id == deckEntity.OwnerClassroomId.Value);
-
                 if (isStudentInClass)
                     return deckEntity;
             }
 
-            var sharedStudentClassrooms = await _classroomRepository.GetStudentClassroomsAsync(userId);
-            bool hasAccessViaShared = sharedStudentClassrooms.Any(c => c.Decks != null && c.Decks.Any(d => d.DeckId == id));
+            bool hasAccessViaShared = studentClassrooms.Any(c => c.Decks != null && c.Decks.Any(d => d.DeckId == id));
 
             if (!hasAccessViaShared)
                 throw new UnauthorizedAccessException("You do not have access to this deck.");

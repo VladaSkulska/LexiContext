@@ -16,6 +16,7 @@ export const DeckActions = ({
   onOpenCardModal,
   onOpenClassroomModal,
   fromClassroom,
+  classroomId,
   isForking,
   onForkDeck
 }) => {
@@ -31,7 +32,12 @@ export const DeckActions = ({
           startIcon={<PlayArrowIcon />}
           onClick={(e) => {
             e.stopPropagation();
-            navigate(`/study/${deck.id}`, { state: { fromClassroom } });
+            navigate(`/study/${deck.id}`, { 
+              state: { 
+                fromClassroom,
+                backUrl: fromClassroom ? `/decks/${deck.id}` : undefined
+              } 
+            });
           }}
           disabled={!deck?.newCards && !deck?.learningCards && !deck?.toReview}
           sx={{ borderRadius: 3, px: 4, textTransform: "none", fontWeight: "bold" }}
