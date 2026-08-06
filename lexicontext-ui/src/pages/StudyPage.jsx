@@ -35,6 +35,7 @@ export const StudyPage = ({ isDarkMode, toggleTheme }) => {
     || (location.state?.fromClassroom ? `/classrooms/${location.state.classroomId || ''}` : `/decks/${id}`);
 
   const isFromClassroom = location.state?.fromClassroom || Boolean(location.state?.classroomId);
+  console.log("=== NEW CODE LOADED ===", { isFromClassroom, state: location.state });
 
   const [cards, setCards] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -80,37 +81,36 @@ export const StudyPage = ({ isDarkMode, toggleTheme }) => {
 
   const handleFlip = () => setIsFlipped(!isFlipped);
 
-  // ВИПРАВЛЕННЯ 1: Логіка переходу ДО наступної картки ТІЛЬКИ в разі успіху запиту.
-  const handleScore = async (quality) => {
-    const currentCard = cards[currentIndex];
-    const cardId = currentCard?.cardId || currentCard?.CardId;
-    if (!cardId) return;
+ const handleScore = async (quality) => {
+  const currentCard = cards[currentIndex];
+  const cardId = currentCard?.cardId || currentCard?.CardId;
+  if (!cardId) return;
 
-    try {
-      // Чекаємо, поки бекенд скаже ОК
-      await axiosClient.post(`/Cards/review`, { cardId, quality });
-      
-      // ЯКЩО МИ ТУТ, ЗНАЧИТЬ ЗАПИТ УСПІШНИЙ. Тільки тепер рухаємо фронтенд!
-      const isLastCard = currentIndex === cards.length - 1;
-      
-      if (quality === 1 || quality === 2) {
-        // Картка йде в кінець черги
-        setCards((prevCards) => [...prevCards, currentCard]);
+  try {
+    await axiosClient.post(`/Cards/review`, { cardId, quality });
+
+    if (quality === 1 || quality === 2) {
+      setCards((prevCards) => {
+        const newCards = [...prevCards, currentCard];
+        return newCards;
+      });
+      setIsFlipped(false);
+      setTimeout(() => setCurrentIndex((prev) => prev + 1), 150);
+    } else {
+      const remainingAfterCurrent = cards.length - 1 - currentIndex;
+
+      if (remainingAfterCurrent === 0) {
+        setIsFinished(true);
+      } else {
         setIsFlipped(false);
         setTimeout(() => setCurrentIndex((prev) => prev + 1), 150);
-      } else {
-        // Картка вивчена
-        if (isLastCard) {
-          setIsFinished(true);
-        } else {
-          setIsFlipped(false);
-          setTimeout(() => setCurrentIndex((prev) => prev + 1), 150);
-        }
       }
-    } catch (error) {
-      console.error("Помилка збереження прогресу:", error);
-      alert(t("study.errorSaveProgress"));    }
-  };
+    }
+  } catch (error) {
+    console.error("Помилка збереження прогресу:", error);
+    alert(t("study.errorSaveProgress"));
+  }
+};
 
   if (isLoading) {
     return (
