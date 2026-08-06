@@ -34,6 +34,8 @@ export const StudyPage = ({ isDarkMode, toggleTheme }) => {
   const backUrl = location.state?.backUrl 
     || (location.state?.fromClassroom ? `/classrooms/${location.state.classroomId || ''}` : `/decks/${id}`);
 
+  const isFromClassroom = location.state?.fromClassroom || Boolean(location.state?.classroomId);
+
   const [cards, setCards] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
