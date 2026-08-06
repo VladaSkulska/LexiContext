@@ -89,7 +89,7 @@ export const GenerateStoryModal = ({ open, onClose, onSubmit, isGenerating }) =>
             {t("common.cancel")}
           </Button>
           <Button 
-            onClick={() => onSubmit(genre)} 
+            onClick={() => { if (typeof onSubmit === 'function') onSubmit(genre); }}
             disabled={isGenerating}
             variant="contained" 
             color="secondary" 
