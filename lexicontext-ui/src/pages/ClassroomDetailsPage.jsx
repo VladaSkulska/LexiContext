@@ -757,13 +757,12 @@ export const ClassroomDetailsPage = ({ isDarkMode, toggleTheme }) => {
       onSuccess={handleAddExistingDecks}
       />
 
-      {selectedDeckId && (
-        <GenerateStoryModal
-          open={isStoryModalOpen}
-          onClose={() => { setIsStoryModalOpen(false); setSelectedDeckId(null); }}
-          deckId={selectedDeckId}
-        />
-      )}
+      <GenerateStoryModal
+        open={isStoryModalOpen}
+        onClose={() => { setIsStoryModalOpen(false); setSelectedDeckId(null); }}
+        onSubmit={handleGenerateStory}
+        isGenerating={isGeneratingStory}
+      />
 
       <CreateDeckModal
         open={isCreateModalOpen}
