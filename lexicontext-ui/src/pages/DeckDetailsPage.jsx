@@ -6,6 +6,7 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { Navbar } from "../components/common/Navbar";
 import axiosClient from "../api/axiosClient";
 import { extractErrorMessage } from "../utils/errorHandler";
+import { getActiveRole, getCurrentUserId } from "../utils/auth";
 import { useTranslation } from "react-i18next";
 
 import { DeckHeader } from "../components/decks/DeckHeader";
@@ -51,26 +52,9 @@ export const DeckDetailsPage = ({ isDarkMode, toggleTheme }) => {
   const [clearingId, setClearingId] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-
-        const decoded = JSON.parse(jsonPayload);
-        const role = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || decoded.role || decoded.Role || "Student";
-        const userId = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || decoded.sub || decoded.nameid || decoded.id;
-        
-        setUserRole(role);
-        setCurrentUserId(userId);
-      } catch (error) {
-        console.error("Token parsing error:", error);
-      }
-    }
-  }, []);
+  setUserRole(getActiveRole());
+  setCurrentUserId(getCurrentUserId());
+}, []);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -230,10 +214,11 @@ export const DeckDetailsPage = ({ isDarkMode, toggleTheme }) => {
   };
 
   const isEditingAllowed = Boolean(
-    deck && 
-    currentUserId && 
-    (deck.createdId === currentUserId || deck.CreatedId === currentUserId)
-  );
+  deck &&
+  currentUserId &&
+  (deck.createdId?.toLowerCase() === currentUserId.toLowerCase() ||
+   deck.CreatedId?.toLowerCase() === currentUserId.toLowerCase())
+);
 
   const isFromClassroom = (userRole === "Student" && !isEditingAllowed) || location.state?.fromClassroom;
   

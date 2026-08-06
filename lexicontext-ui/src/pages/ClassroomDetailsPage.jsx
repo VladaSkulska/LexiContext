@@ -61,6 +61,7 @@ export const ClassroomDetailsPage = ({ isDarkMode, toggleTheme }) => {
 
   const [isStoryModalOpen, setIsStoryModalOpen] = useState(false);
   const [selectedDeckId, setSelectedDeckId] = useState(null);
+  const [isGeneratingStory, setIsGeneratingStory] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isCreatingDeck, setIsCreatingDeck] = useState(false);
   const [userRole, setUserRole] = useState(() => getActiveRole());
@@ -289,6 +290,30 @@ export const ClassroomDetailsPage = ({ isDarkMode, toggleTheme }) => {
       }
     });
   };
+
+  const handleGenerateStory = async (selectedGenre) => {
+  setIsGeneratingStory(true);
+  try {
+    const response = await axiosClient.post("/Stories/generate", {
+      deckId: selectedDeckId,
+      genre: selectedGenre,
+    });
+    setIsStoryModalOpen(false);
+    setSelectedDeckId(null);
+    navigate(`/story/${response.data.id}`);
+  } catch (error) {
+    console.error("Error generating story:", error);
+    setSnackbar({ 
+      open: true, 
+      message: error.response?.data?.message || "Error generating story", 
+      severity: "error" 
+    });
+    setIsStoryModalOpen(false);
+    setSelectedDeckId(null);
+  } finally {
+    setIsGeneratingStory(false);
+  }
+};
 
   const handleToggleTask = async (task) => {
     if (userRole === "Teacher") return;

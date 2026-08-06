@@ -28,13 +28,23 @@ export const StudyPage = ({ isDarkMode, toggleTheme }) => {
   const location = useLocation();
   const { t } = useTranslation();
 
-  // ВИПРАВЛЕННЯ 2: Динамічний шлях повернення. 
-  // Якщо є location.state.fromClassroom, вертаємо туди. Якщо ні - в деку.
-  // Найкраще передавати конкретний backUrl при навігації сюди.
-  const backUrl = location.state?.backUrl 
-    || (location.state?.fromClassroom ? `/classrooms/${location.state.classroomId || ''}` : `/decks/${id}`);
+const savedState = (() => {
+  try { return JSON.parse(sessionStorage.getItem(`study_state_${id}`) || '{}'); } 
+  catch { return {}; }
+})();
 
-  const isFromClassroom = location.state?.fromClassroom || Boolean(location.state?.classroomId);
+const stateSource = location.state?.backUrl ? location.state : savedState;
+
+const backUrl = stateSource.backUrl 
+  || (stateSource.fromClassroom ? `/classrooms/${stateSource.classroomId || ''}` : `/decks/${id}`);
+
+const isFromClassroom = Boolean(stateSource.fromClassroom || stateSource.classroomId);
+
+useEffect(() => {
+  if (location.state?.backUrl || location.state?.fromClassroom) {
+    sessionStorage.setItem(`study_state_${id}`, JSON.stringify(location.state));
+  }
+}, []);
   console.log("=== NEW CODE LOADED ===", { isFromClassroom, state: location.state });
 
   const [cards, setCards] = useState([]);
@@ -90,15 +100,11 @@ export const StudyPage = ({ isDarkMode, toggleTheme }) => {
     await axiosClient.post(`/Cards/review`, { cardId, quality });
 
     if (quality === 1 || quality === 2) {
-      setCards((prevCards) => {
-        const newCards = [...prevCards, currentCard];
-        return newCards;
-      });
+      setCards((prevCards) => [...prevCards, currentCard]);
       setIsFlipped(false);
       setTimeout(() => setCurrentIndex((prev) => prev + 1), 150);
     } else {
       const remainingAfterCurrent = cards.length - 1 - currentIndex;
-
       if (remainingAfterCurrent === 0) {
         setIsFinished(true);
       } else {
