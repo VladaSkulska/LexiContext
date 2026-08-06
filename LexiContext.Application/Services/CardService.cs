@@ -47,7 +47,7 @@ namespace LexiContext.Application.Services
         public async Task<CardDto> CreateCardAsync(CreateCardDto dto, Guid userId)
         {
             await _createCardValidator.ValidateAndThrowCustomAsync(dto);
-            var deck = await GetDeckOrThrowAsync(dto.DeckId, userId, strictOwnerCheck: true);
+            var deck = await GetDeckOrThrowAsync(dto.DeckId, userId, strictOwnerCheck: false);
 
             var cleanFront = CleanString(dto.Front);
             var exists = await _cardRepository.ExistsAsync(dto.DeckId, cleanFront.ToLower());
@@ -185,7 +185,7 @@ namespace LexiContext.Application.Services
         {
             await _updateCardValidator.ValidateAndThrowCustomAsync(dto);
             var existingCard = await GetCardOrThrowAsync(id, userId);
-            var deck = await GetDeckOrThrowAsync(existingCard.DeckId, userId);
+            var deck = await GetDeckOrThrowAsync(existingCard.DeckId, userId, strictOwnerCheck: false);
 
             var cleanFront = CleanString(dto.Front);
 
@@ -194,7 +194,7 @@ namespace LexiContext.Application.Services
                 var exists = await _cardRepository.ExistsAsync(existingCard.DeckId, cleanFront.ToLower());
                 if (exists)
                 {
-                    throw new Domain.Exceptions.ValidationException($"Слово або фраза '{cleanFront}' вже існує у цій колоді.");
+                    throw new Domain.Exceptions.ValidationException($"Word of phrase '{cleanFront}' already exists in this deck.");
                 }
             }
 
@@ -236,7 +236,7 @@ namespace LexiContext.Application.Services
             if (string.IsNullOrWhiteSpace(card.GeneratedContext))
                 throw new Domain.Exceptions.ValidationException("Card does not have generated context to simplify.");
 
-            var deck = await GetDeckOrThrowAsync(card.DeckId, userId);
+            var deck = await GetDeckOrThrowAsync(card.DeckId, userId, strictOwnerCheck: false);
             var simplerLevel = GetSimplerLevel(deck.ProficiencyLevel);
 
             var simplifiedResult = await _aiContextService.SimplifyContextAsync(

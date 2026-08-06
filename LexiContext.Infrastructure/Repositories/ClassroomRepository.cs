@@ -230,5 +230,16 @@ namespace LexiContext.Infrastructure.Repositories
             _context.StudentHomeworks.Update(homework);
             await _context.SaveChangesAsync();
         }
+
+        public async Task<Classroom?> GetClassroomByGroupTaskIdAsync(Guid groupTaskId)
+        {
+            var homework = await _context.StudentHomeworks
+                .FirstOrDefaultAsync(h => h.GroupTaskId == groupTaskId);
+
+            if (homework == null) return null;
+
+            return await _context.Classrooms
+                .FirstOrDefaultAsync(c => c.Id == homework.ClassroomId);
+        }
     }
 }

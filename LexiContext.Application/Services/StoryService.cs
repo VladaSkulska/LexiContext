@@ -97,7 +97,7 @@ namespace LexiContext.Application.Services
         private async Task CheckStoryLimitAsync(Guid userId)
         {
             var storiesThisWeek = await _storyRepository.CountStoriesInLastWeekAsync(userId);
-            if (storiesThisWeek >= 30)
+            if (storiesThisWeek >= 3)
             {
                 throw new ValidationException("You have reached the limit of free stories per week (3/3). Try it later or switch to Premium.");
             }

@@ -29,5 +29,6 @@ namespace LexiContext.Application.Interfaces.Repos
         Task DeleteHomeworkByGroupTaskIdAsync(Guid groupTaskId);
         Task UpdateHomeworkAsync(StudentHomework homework);
         Task<List<HomeworkSummaryDto>> GetHomeworkSummaryForTeacherAsync(Guid classroomId);
+        Task<Classroom?> GetClassroomByGroupTaskIdAsync(Guid groupTaskId);
     }
 }

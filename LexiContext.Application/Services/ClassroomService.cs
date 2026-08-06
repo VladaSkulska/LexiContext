@@ -208,7 +208,8 @@ namespace LexiContext.Infrastructure.Repositories
 
             var studentIds = await _classroomRepository.GetStudentIdsByClassroomAsync(classroomId);
 
-            if (!studentIds.Any()) return;
+            if (!studentIds.Any())
+                throw new InvalidOperationException("Cannot create homework: there are no students in this classroom.");
 
             var groupTaskId = Guid.NewGuid();
             var homeworkRecords = studentIds.Select(studentId => new StudentHomework
@@ -248,6 +249,10 @@ namespace LexiContext.Infrastructure.Repositories
 
         public async Task DeleteHomeworkAsync(Guid groupTaskId, Guid teacherId)
         {
+            var classroom = await _classroomRepository.GetClassroomByGroupTaskIdAsync(groupTaskId);
+            if (classroom == null || classroom.TeacherId != teacherId)
+                throw new UnauthorizedAccessException("You do not have permission to delete this homework.");
+
             await _classroomRepository.DeleteHomeworkByGroupTaskIdAsync(groupTaskId);
         }
 
