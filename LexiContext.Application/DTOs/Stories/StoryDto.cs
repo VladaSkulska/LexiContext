@@ -11,6 +11,7 @@ namespace LexiContext.Application.DTOs.Stories
         public string? DeckName { get; set; }
         public DateTime CreatedAt { get; set; }
 
+        public bool CanAddCardsToDeck { get; set; }
         public List<StoryPhraseDto> Phrases { get; set; } = new();
     }
 }

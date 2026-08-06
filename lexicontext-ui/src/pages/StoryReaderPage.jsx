@@ -386,26 +386,26 @@ export const StoryReaderPage = ({ isDarkMode, toggleTheme }) => {
                           </Typography>
                         </TableCell>
                         <TableCell align="right">
-                          {phrase.isAlreadyInDeck || addedWords.has(phrase.id) ? (
-                            <Chip
-                              icon={<CheckIcon fontSize="small" />}
-                              label={t("storyReader.inDeck", "In Deck")}
-                              color="success"
+                        {!story.canAddCardsToDeck ? null : phrase.isAlreadyInDeck || addedWords.has(phrase.id) ? (
+                          <Chip
+                            icon={<CheckIcon fontSize="small" />}
+                            label={t("storyReader.inDeck", "In Deck")}
+                            color="success"
+                            size="small"
+                            variant="outlined"
+                          />
+                        ) : (
+                          <Tooltip title={t("storyReader.addToDeck", "Add to Deck")}>
+                            <IconButton
+                              color="primary"
+                              onClick={() => handleAddCard(phrase)}
                               size="small"
-                              variant="outlined"
-                            />
-                          ) : (
-                            <Tooltip title={t("storyReader.addToDeck", "Add to Deck")}>
-                              <IconButton
-                                color="primary"
-                                onClick={() => handleAddCard(phrase)}
-                                size="small"
-                              >
-                                <AddIcon />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-                        </TableCell>
+                            >
+                              <AddIcon />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

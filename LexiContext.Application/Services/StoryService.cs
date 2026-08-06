@@ -74,13 +74,18 @@ namespace LexiContext.Application.Services
                 throw new UnauthorizedAccessException("You don't have access to this story.");
 
             var existingWords = new HashSet<string>();
+            bool canAddCards = false;
+
             if (story.DeckId != Guid.Empty)
             {
                 var cardsInDeck = await _cardRepository.GetByDeckIdAsync(story.DeckId);
                 existingWords = cardsInDeck.Select(c => c.Front.ToLower().Trim()).ToHashSet();
+
+                var deck = await _deckRepository.GetByIdAsync(story.DeckId);
+                canAddCards = deck != null && deck.CreatedId == userId && deck.OwnerClassroomId == null;
             }
 
-            return MapToStoryDto(story, existingWords);
+            return MapToStoryDto(story, existingWords, canAddCards);
         }
 
         public async Task DeleteStoryAsync(Guid id, Guid userId)
@@ -145,7 +150,7 @@ namespace LexiContext.Application.Services
                 }).ToList() ?? new List<StoryPhrase>()
             };
         }
-        private static StoryDto MapToStoryDto(Story story, HashSet<string>? existingWords = null)
+        private static StoryDto MapToStoryDto(Story story, HashSet<string>? existingWords = null, bool canAddCards = false)
         {
             existingWords ??= new HashSet<string>();
 
@@ -158,6 +163,7 @@ namespace LexiContext.Application.Services
                 DeckId = story.DeckId,
                 DeckName = story.Deck?.Title,
                 CreatedAt = story.CreatedAt,
+                CanAddCardsToDeck = canAddCards,
                 Phrases = story.Phrases.Select(p => new StoryPhraseDto
                 {
                     Id = p.Id,
