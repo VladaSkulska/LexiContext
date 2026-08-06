@@ -180,8 +180,11 @@ namespace LexiContext.Infrastructure.Repositories
 
         public async Task<List<HomeworkSummaryDto>> GetHomeworkSummaryForTeacherAsync(Guid classroomId)
         {
-            return await _context.StudentHomeworks
+            var homeworks = await _context.StudentHomeworks
                 .Where(h => h.ClassroomId == classroomId)
+                .ToListAsync();
+
+            return homeworks
                 .GroupBy(h => new { h.GroupTaskId, h.TaskText })
                 .Select(g => new HomeworkSummaryDto(
                     g.Key.GroupTaskId,
@@ -192,7 +195,7 @@ namespace LexiContext.Infrastructure.Repositories
                     g.All(x => x.IsCompleted)
                 ))
                 .OrderByDescending(x => x.CreatedAt)
-                .ToListAsync();
+                .ToList();
         }
 
         public async Task<List<StudentHomework>> GetStudentHomeworksAsync(Guid classroomId, Guid studentId)

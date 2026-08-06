@@ -33,7 +33,9 @@ const savedState = (() => {
   catch { return {}; }
 })();
 
-const stateSource = location.state?.backUrl ? location.state : savedState;
+const stateSource = (location.state?.backUrl || location.state?.fromClassroom) 
+  ? location.state 
+  : savedState;
 
 const backUrl = stateSource.backUrl 
   || (stateSource.fromClassroom ? `/classrooms/${stateSource.classroomId || ''}` : `/decks/${id}`);
@@ -45,7 +47,6 @@ useEffect(() => {
     sessionStorage.setItem(`study_state_${id}`, JSON.stringify(location.state));
   }
 }, []);
-  console.log("=== NEW CODE LOADED ===", { isFromClassroom, state: location.state });
 
   const [cards, setCards] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);

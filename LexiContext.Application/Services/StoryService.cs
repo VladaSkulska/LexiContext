@@ -15,6 +15,7 @@ namespace LexiContext.Application.Services
         private readonly IDeckRepository _deckRepository;
         private readonly ICardRepository _cardRepository;
         private readonly IAiContextService _aiContextService;
+        private readonly IClassroomRepository _classroomRepository;
         private readonly ILogger<StoryService> _logger;
 
         private const int MaxUserWords = 10;
@@ -24,12 +25,14 @@ namespace LexiContext.Application.Services
             IDeckRepository deckRepository,
             ICardRepository cardRepository,
             IAiContextService aiContextService,
+            IClassroomRepository classroomRepository,
             ILogger<StoryService> logger)
         {
             _storyRepository = storyRepository;
             _deckRepository = deckRepository;
             _cardRepository = cardRepository;
             _aiContextService = aiContextService;
+            _classroomRepository = classroomRepository;
             _logger = logger;
         }
 
@@ -105,7 +108,10 @@ namespace LexiContext.Application.Services
             var deck = await _deckRepository.GetByIdAsync(deckId)
                 ?? throw new NotFoundException("Deck", deckId);
 
-            if (deck.CreatedId != userId)
+            bool isOwner = deck.CreatedId == userId;
+            bool hasClassroomAccess = await _classroomRepository.HasStudentAccessToDeckAsync(deckId, userId);
+
+            if (!isOwner && !hasClassroomAccess)
                 throw new UnauthorizedAccessException("You don't have access to this deck.");
 
             return deck;
