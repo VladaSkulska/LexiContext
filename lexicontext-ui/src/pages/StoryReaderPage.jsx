@@ -254,20 +254,21 @@ export const StoryReaderPage = ({ isDarkMode, toggleTheme }) => {
                   variant="outlined"
                   sx={{ fontWeight: "bold" }}
                 />
-                {story.deckId && story.deckName && (
-                  <Chip
-                    icon={<FolderIcon fontSize="small" />}
-                    label={story.deckName}
-                    color="primary"
-                    variant="outlined"
-                    onClick={() => navigate(`/decks/${story.deckId}`)}
-                    sx={{ 
-                      fontWeight: "bold", 
-                      cursor: "pointer",
-                      "&:hover": { bgcolor: "action.hover" }
-                    }}
-                  />
-                )}
+                {story.deckName && (
+                <Chip
+                  icon={<FolderIcon fontSize="small" />}
+                  label={story.deckId ? story.deckName : `${story.deckName} (${t("common.deleted", "Deleted")})`}
+                  color={story.deckId ? "primary" : "default"}
+                  variant="outlined"
+                  onClick={story.deckId ? () => navigate(`/decks/${story.deckId}`) : undefined}
+                  sx={{ 
+                    fontWeight: "bold", 
+                    cursor: story.deckId ? "pointer" : "default",
+                    opacity: story.deckId ? 1 : 0.6,
+                    "&:hover": story.deckId ? { bgcolor: "action.hover" } : {}
+                  }}
+                />
+              )}
                 
                 {/* Кнопка для тексту історії */}
                 {isAsianLanguage && (
