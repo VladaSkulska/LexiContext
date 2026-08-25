@@ -16,26 +16,36 @@ export const DeleteConfirmDialog = ({
   onConfirm, 
   title, 
   content, 
+  itemName, 
   isDeleting 
 }) => {
   const { t } = useTranslation();
+
+  // Використовуємо ключі з вашого JSON
+  const displayTitle = title || t("modals.deleteDeck.title");
+  
+  const displayContent = content || (
+    itemName 
+      ? `${t("modals.deleteDeck.messagePart1")} "${itemName}"${t("modals.deleteDeck.messagePart2")}`
+      : `${t("modals.deleteDeck.messagePart1")}${t("modals.deleteDeck.messagePart2")}`
+  );
 
   return (
     <Dialog
       open={open}
       onClose={() => !isDeleting && onClose()}
-      PaperProps={{ sx: { borderRadius: 4, p: 1, maxWidth: 400 } }}
+      PaperProps={{ sx: { borderRadius: 4, p: 1, maxWidth: 420 } }}
     >
       <DialogTitle sx={{ textAlign: "center", pt: 3 }}>
         <WarningAmberIcon color="error" sx={{ fontSize: 48, mb: 1 }} />
         <Typography variant="h6" component="div" fontWeight="bold">
-          {title}
+          {displayTitle}
         </Typography>
       </DialogTitle>
       
       <DialogContent sx={{ textAlign: "center" }}>
         <Typography variant="body1" color="text.secondary">
-          {content}
+          {displayContent} 
         </Typography>
       </DialogContent>
       
