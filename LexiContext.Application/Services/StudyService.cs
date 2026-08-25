@@ -17,10 +17,13 @@ namespace LexiContext.Application.Services
         private readonly IValidator<ReviewCardDto> _reviewCardValidator;
         private readonly IUserActivityRepository _activityRepository;
 
+        private readonly IDeckRepository _deckRepository;
+
         public StudyService(
             IUserCardProgressRepository progressRepository,
             ICardRepository cardRepository,
             IUserRepository userRepository,
+            IDeckRepository deckRepository,
             ISpacedRepetitionService srsService,
             IValidator<ReviewCardDto> reviewCardValidator,
             IUserActivityRepository activityRepository)
@@ -28,6 +31,7 @@ namespace LexiContext.Application.Services
             _progressRepository = progressRepository;
             _cardRepository = cardRepository;
             _userRepository = userRepository;
+            _deckRepository = deckRepository;
             _srsService = srsService;
             _reviewCardValidator = reviewCardValidator;
             _activityRepository = activityRepository;
@@ -35,19 +39,21 @@ namespace LexiContext.Application.Services
 
         public async Task<List<DueCardDto>> GetDueCardsAsync(Guid deckId, Guid userId)
         {
+            var deck = await _deckRepository.GetByIdAsync(deckId);
             var allCards = await _cardRepository.GetByDeckIdAsync(deckId);
             var userProgress = await _progressRepository.GetByDeckIdAsync(userId, deckId);
 
-            var dueCards = new List<DueCardDto>();
+            var newCards = new List<DueCardDto>();
+            var reviewCards = new List<DueCardDto>();
             var endOfToday = DateTime.UtcNow.Date.AddDays(1).AddTicks(-1);
 
             foreach (var card in allCards)
             {
                 var progress = userProgress.FirstOrDefault(p => p.CardId == card.Id);
 
-                if (progress == null || progress.NextReviewAt <= endOfToday)
+                if (progress == null)
                 {
-                    dueCards.Add(new DueCardDto
+                    newCards.Add(new DueCardDto
                     {
                         CardId = card.Id,
                         Front = card.Front,
@@ -56,12 +62,33 @@ namespace LexiContext.Application.Services
                         ContextTranslation = card.ContextTranslation ?? string.Empty,
                         ContextReading = card.ContextReading ?? string.Empty,
                         ImageURL = card.ImageURL ?? string.Empty,
-                        IsNew = progress == null
+                        IsNew = true
+                    });
+                }
+                else if (progress.NextReviewAt <= endOfToday)
+                {
+                    reviewCards.Add(new DueCardDto
+                    {
+                        CardId = card.Id,
+                        Front = card.Front,
+                        Back = card.Back,
+                        GeneratedContext = card.GeneratedContext ?? string.Empty,
+                        ContextTranslation = card.ContextTranslation ?? string.Empty,
+                        ContextReading = card.ContextReading ?? string.Empty,
+                        ImageURL = card.ImageURL ?? string.Empty,
+                        IsNew = false
                     });
                 }
             }
 
-            return dueCards;
+            int maxNew = deck?.DailyNewCardsLimit ?? 20;
+            int maxReview = deck?.DailyReviewLimit ?? 50;
+
+            var finalQueue = new List<DueCardDto>();
+            finalQueue.AddRange(newCards.Take(maxNew));
+            finalQueue.AddRange(reviewCards.Take(maxReview));
+
+            return finalQueue;
         }
 
         public async Task ProcessReviewAsync(Guid userId, ReviewCardDto dto)

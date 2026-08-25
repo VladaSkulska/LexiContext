@@ -30,8 +30,8 @@ export const EditDeckModal = ({
   const [formData, setFormData] = useState({
     title: initialData?.title || "",
     description: initialData?.description || "",
-    dailyNewCardsLimit: initialData?.dailyNewCardsLimit || 20,
-    dailyReviewLimit: initialData?.dailyReviewLimit || 50,
+    dailyNewCardsLimit: initialData?.dailyNewCardsLimit ?? 20, // Змінено на ??
+    dailyReviewLimit: initialData?.dailyReviewLimit ?? 50,     // Змінено на ??
   });
 
   const handleChange = (e) => {
@@ -41,7 +41,7 @@ export const EditDeckModal = ({
     setFormData((prev) => ({
       ...prev,
       [name]: type === "number" 
-        ? Number(value) 
+        ? (value === "" ? "" : Number(value)) // Якщо пусте - залишаємо пустим, інакше число
         : (isTextField ? String(value) : value),
     }));
   };
@@ -60,12 +60,19 @@ export const EditDeckModal = ({
 
     if (!safeTitle) return;
 
+    // ПРАВИЛЬНА ЛОГІКА ЗБЕРЕЖЕННЯ ЛІМІТІВ (без втрати нуля)
+    const finalNewCardsLimit = formData.dailyNewCardsLimit === "" || isNaN(Number(formData.dailyNewCardsLimit)) 
+        ? 20 : Number(formData.dailyNewCardsLimit);
+    
+    const finalReviewLimit = formData.dailyReviewLimit === "" || isNaN(Number(formData.dailyReviewLimit)) 
+        ? 50 : Number(formData.dailyReviewLimit);
+
     onSubmit({
       ...formData,
       title: safeTitle,
       description: safeDescription,
-      dailyNewCardsLimit: Number(formData.dailyNewCardsLimit) || 20,
-      dailyReviewLimit: Number(formData.dailyReviewLimit) || 50,
+      dailyNewCardsLimit: finalNewCardsLimit,
+      dailyReviewLimit: finalReviewLimit,
     });
   };
 
@@ -168,14 +175,15 @@ export const EditDeckModal = ({
             <TextField
               label={t("modals.createDeck.newCardsLimit")}
               name="dailyNewCardsLimit"
-              helperText={`${t("modals.createDeck.recommended")} 20`}
               type="number"
               fullWidth
               variant="outlined"
-              value={formData.dailyNewCardsLimit}
+              value={formData.dailyNewCardsLimit === "" ? "" : formData.dailyNewCardsLimit} // Виправлено
               onChange={handleChange}
               disabled={isSaving}
-              InputProps={{ inputProps: { min: 1, max: 100 } }}
+              placeholder="20" // Додано підказку
+              helperText={`${t("modals.createDeck.recommended")} 20 (0 = no new cards)`} // Змінено текст
+              InputProps={{ inputProps: { min: 0, max: 100 } }} // Дозволяємо 0
               sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
             />
           </Grid>
@@ -183,14 +191,15 @@ export const EditDeckModal = ({
             <TextField
               label={t("modals.createDeck.reviewLimit")}
               name="dailyReviewLimit"
-              helperText={`${t("modals.createDeck.recommended")} 50`}
               type="number"
               fullWidth
               variant="outlined"
-              value={formData.dailyReviewLimit}
+              value={formData.dailyReviewLimit === "" ? "" : formData.dailyReviewLimit} // Виправлено
               onChange={handleChange}
               disabled={isSaving}
-              InputProps={{ inputProps: { min: 1, max: 500 } }}
+              placeholder="50" // Додано підказку
+              helperText={`${t("modals.createDeck.recommended")} 50`}
+              InputProps={{ inputProps: { min: 0, max: 500 } }} // Дозволяємо 0
               sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
             />
           </Grid>

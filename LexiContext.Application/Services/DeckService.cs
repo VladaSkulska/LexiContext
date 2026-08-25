@@ -76,7 +76,7 @@ namespace LexiContext.Application.Services
             var cards = await _cardRepository.GetByDeckIdAsync(deckEntity.Id);
             var progresses = await _progressRepository.GetByDeckIdAsync(userId, deckEntity.Id);
 
-            var stats = CalculateStats(cards.Count, progresses);
+            var stats = CalculateStats(cards.Count, progresses, deckEntity.DailyNewCardsLimit, deckEntity.DailyReviewLimit);
 
             return MapToDeckDto(deckEntity, stats.New, stats.Learning, stats.Review);
         }
@@ -91,7 +91,7 @@ namespace LexiContext.Application.Services
                 var cardsInDeck = await _cardRepository.GetByDeckIdAsync(deck.Id);
                 var progresses = await _progressRepository.GetByDeckIdAsync(userId, deck.Id);
 
-                var stats = CalculateStats(cardsInDeck.Count, progresses);
+                var stats = CalculateStats(cardsInDeck.Count, progresses, deck.DailyNewCardsLimit, deck.DailyReviewLimit);
 
                 dtos.Add(MapToDeckDto(deck, stats.New, stats.Learning, stats.Review));
             }
@@ -116,7 +116,7 @@ namespace LexiContext.Application.Services
 
             var cards = await _cardRepository.GetByDeckIdAsync(entity.Id);
             var progresses = await _progressRepository.GetByDeckIdAsync(userId, entity.Id);
-            var stats = CalculateStats(cards.Count, progresses);
+            var stats = CalculateStats(cards.Count, progresses, entity.DailyNewCardsLimit, entity.DailyReviewLimit);
 
             return MapToDeckDto(entity, stats.New, stats.Learning, stats.Review);
         }
@@ -249,6 +249,28 @@ namespace LexiContext.Application.Services
                 LearningCards = learningCards,
                 ToReview = toReview
             };
+        }
+
+        // Додайте параметри лімітів у метод
+        private static (int New, int Learning, int Review) CalculateStats(
+            int totalCards,
+            List<UserCardProgress> progresses,
+            int dailyNewLimit,
+            int dailyReviewLimit)
+        {
+            var endOfToday = DateTime.UtcNow.Date.AddDays(1).AddTicks(-1);
+            var startOfToday = DateTime.UtcNow.Date;
+
+            int mathNewCards = Math.Max(0, totalCards - progresses.Count);
+
+            int actualNewCards = Math.Min(mathNewCards, dailyNewLimit);
+
+            int learningCards = progresses.Count(p => p.IntervalDays == 0 && p.NextReviewAt <= endOfToday);
+
+            int mathToReview = progresses.Count(p => p.IntervalDays > 0 && p.NextReviewAt <= endOfToday);
+            int actualToReview = Math.Min(mathToReview, dailyReviewLimit);
+
+            return (actualNewCards, learningCards, actualToReview);
         }
     }
 }

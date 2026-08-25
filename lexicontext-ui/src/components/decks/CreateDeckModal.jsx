@@ -98,8 +98,10 @@ export const CreateDeckModal = ({
       nativeLanguage: Number(formData.nativeLanguage),
       proficiencyLevel: Number(formData.proficiencyLevel),
       tone: Number(formData.tone),
-      dailyNewCardsLimit: Number(formData.dailyNewCardsLimit) || 20,
-      dailyReviewLimit: Number(formData.dailyReviewLimit) || 50,
+      dailyNewCardsLimit: formData.dailyNewCardsLimit === "" || isNaN(Number(formData.dailyNewCardsLimit)) 
+                            ? 20 : Number(formData.dailyNewCardsLimit),
+      dailyReviewLimit: formData.dailyReviewLimit === "" || isNaN(Number(formData.dailyReviewLimit)) 
+                            ? 50 : Number(formData.dailyReviewLimit),
       classroomId: classroomId ? classroomId : null,
     };
 
