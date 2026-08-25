@@ -16,14 +16,19 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args
+});
 
-builder.Configuration.Sources.Clear();
-
-builder.Configuration
-    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
-    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: false)
-    .AddEnvironmentVariables();
+// Вимикаємо FileSystemWatcher / inotify, які викликають збій на Render
+builder.Host.ConfigureAppConfiguration((hostingContext, config) =>
+{
+    config.Sources.Clear();
+    config.AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
+          .AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: false)
+          .AddEnvironmentVariables();
+});
 
 builder.Services.AddControllers()
     .AddJsonOptions(option =>
@@ -113,14 +118,13 @@ builder.Services.AddScoped<AuthService>();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReactApp",
-        policy =>
-        {
-            policy.WithOrigins("http://localhost:5173", "https://lexi-context-sepia.vercel.app")
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
-        });
+    options.AddPolicy("AllowReactApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173", "https://lexi-context-sepia.vercel.app")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
 });
 
 var app = builder.Build();
