@@ -333,7 +333,9 @@ export const DeckDetailsPage = ({ isDarkMode, toggleTheme }) => {
         onClose={() => setCardToDelete(null)}
         onConfirm={confirmDeleteCard}
         title={t("deckDetails.tooltipDelete")}
-        content={`${t("storyReader.deleteConfirmMsg")} ("${cardToDelete?.front || cardToDelete?.Front || ""}")`}
+        content={t("deckDetails.deleteCardConfirm", { 
+          word: cardToDelete?.front || cardToDelete?.Front || "" 
+        })}
         isDeleting={isDeletingCard}
       />
 

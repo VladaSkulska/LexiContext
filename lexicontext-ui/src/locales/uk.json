@@ -143,7 +143,8 @@
     "tooltipDelete": "Видалити картку",
     "empty": "Колода порожня.",
     "mastered": "Засвоєно (Mastered)",
-    "inClassroom": "Матеріал з класу"
+    "inClassroom": "Матеріал з класу",
+    "deleteCardConfirm": "Цю дію неможливо скасувати. Ви дійсно хочете видалити картку \"{{word}}\"?"
   },
   "modals": {
     "createDeck": {
