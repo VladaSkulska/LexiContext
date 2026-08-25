@@ -51,6 +51,9 @@ export const DeckDetailsPage = ({ isDarkMode, toggleTheme }) => {
   const [generatingId, setGeneratingId] = useState(null);
   const [clearingId, setClearingId] = useState(null);
 
+  const [cardToDelete, setCardToDelete] = useState(null);
+  const [isDeletingCard, setIsDeletingCard] = useState(false);
+
   useEffect(() => {
   setUserRole(getActiveRole());
   setCurrentUserId(getCurrentUserId());
@@ -125,13 +128,24 @@ export const DeckDetailsPage = ({ isDarkMode, toggleTheme }) => {
     }
   };
 
-  const handleDeleteCard = async (cardId) => {
-    if (!window.confirm(t("common.delete") + "?")) return;
+  const handleDeleteCardClick = (cardId) => {
+    const card = cards.find((c) => c.id === cardId || c.Id === cardId);
+    setCardToDelete(card || { id: cardId });
+  };
+
+  const confirmDeleteCard = async () => {
+    if (!cardToDelete) return;
+    
+    setIsDeletingCard(true);
     try {
-      await axiosClient.delete(`/Cards/${cardId}`);
+      await axiosClient.delete(`/Cards/${cardToDelete.id || cardToDelete.Id}`);
       await loadData();
+      setCardToDelete(null);
     } catch (error) {
       setPageError(extractErrorMessage(error));
+      setCardToDelete(null);
+    } finally {
+      setIsDeletingCard(false);
     }
   };
 
@@ -294,15 +308,57 @@ export const DeckDetailsPage = ({ isDarkMode, toggleTheme }) => {
           onGenerateContext={handleGenerateContext}
           onSimplifyCard={handleSimplifyCard}
           onClearContext={handleClearContext}
-          onDeleteCard={handleDeleteCard}
+          onDeleteCard={handleDeleteCardClick}
         />
       </Container>
 
-      <GenerateStoryModal open={openStoryModal} onClose={() => setOpenStoryModal(false)} onSubmit={handleGenerateStory} isGenerating={isGeneratingStory} />
-      <DeleteConfirmDialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)} onConfirm={confirmDeleteDeck} itemName={deck?.title || t("dashboard.untitled")} />
-      <AddCardModal open={openCardModal} onClose={() => setOpenCardModal(false)} onSubmit={handleSaveCard} isSaving={isSavingCard} serverError={cardError} />
-      <EditDeckModal open={openDeckModal} onClose={() => setOpenDeckModal(false)} onSubmit={handleSaveDeck} initialData={deck} isSaving={isSavingDeck} serverError={deckError} />
-      <AddDeckToClassroomModal open={openClassroomModal} onClose={() => setOpenClassroomModal(false)} deckId={id} />
+      <GenerateStoryModal 
+        open={openStoryModal} 
+        onClose={() => setOpenStoryModal(false)} 
+        onSubmit={handleGenerateStory} 
+        isGenerating={isGeneratingStory} 
+      />
+
+      {/* Модалка видалення колоди */}
+      <DeleteConfirmDialog 
+        open={openDeleteDialog} 
+        onClose={() => setOpenDeleteDialog(false)} 
+        onConfirm={confirmDeleteDeck} 
+        itemName={deck?.title || t("dashboard.untitled")} 
+      />
+
+      {/* Модалка видалення окремої картки */}
+      <DeleteConfirmDialog
+        open={Boolean(cardToDelete)}
+        onClose={() => setCardToDelete(null)}
+        onConfirm={confirmDeleteCard}
+        title={t("deckDetails.tooltipDelete")}
+        content={`${t("storyReader.deleteConfirmMsg")} ("${cardToDelete?.front || cardToDelete?.Front || ""}")`}
+        isDeleting={isDeletingCard}
+      />
+
+      <AddCardModal 
+        open={openCardModal} 
+        onClose={() => setOpenCardModal(false)} 
+        onSubmit={handleSaveCard} 
+        isSaving={isSavingCard} 
+        serverError={cardError} 
+      />
+
+      <EditDeckModal 
+        open={openDeckModal} 
+        onClose={() => setOpenDeckModal(false)} 
+        onSubmit={handleSaveDeck} 
+        initialData={deck} 
+        isSaving={isSavingDeck} 
+        serverError={deckError} 
+      />
+
+      <AddDeckToClassroomModal 
+        open={openClassroomModal} 
+        onClose={() => setOpenClassroomModal(false)} 
+        deckId={id} 
+      />
     </Box>
   );
 };
