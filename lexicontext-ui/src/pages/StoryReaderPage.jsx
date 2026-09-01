@@ -354,18 +354,18 @@ export const StoryReaderPage = ({ isDarkMode, toggleTheme }) => {
                     }}
                   >
                     <TableRow>
-                      <TableCell sx={{ fontWeight: "bold", width: "25%" }}>
+                      <TableCell sx={{ fontWeight: "bold", width: story.canAddCardsToDeck ? "40%" : "50%" }}>
                         {t("storyReader.table.word", "Word")}
                       </TableCell>
-                      <TableCell sx={{ fontWeight: "bold", width: "20%" }}>
-                        {t("storyReader.table.reading", "Reading")}
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: "bold", width: "35%" }}>
+                      <TableCell sx={{ fontWeight: "bold", width: story.canAddCardsToDeck ? "40%" : "50%" }}>
                         {t("storyReader.table.translation", "Translation")}
                       </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: "bold", width: "20%" }}>
-                        {t("storyReader.table.add", "Action")}
-                      </TableCell>
+                      {/* Показуємо колонку Action тільки якщо можна додавати картки */}
+                      {story.canAddCardsToDeck && (
+                        <TableCell align="right" sx={{ fontWeight: "bold", width: "20%" }}>
+                          {t("storyReader.table.add", "Action")}
+                        </TableCell>
+                      )}
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -377,36 +377,34 @@ export const StoryReaderPage = ({ isDarkMode, toggleTheme }) => {
                           />
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2" color="text.secondary">
-                            {phrase.reading}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
                           <Typography variant="body2">
                             {phrase.translation}
                           </Typography>
                         </TableCell>
-                        <TableCell align="right">
-                        {!story.canAddCardsToDeck ? null : phrase.isAlreadyInDeck || addedWords.has(phrase.id) ? (
-                          <Chip
-                            icon={<CheckIcon fontSize="small" />}
-                            label={t("storyReader.inDeck", "In Deck")}
-                            color="success"
-                            size="small"
-                            variant="outlined"
-                          />
-                        ) : (
-                          <Tooltip title={t("storyReader.addToDeck", "Add to Deck")}>
-                            <IconButton
-                              color="primary"
-                              onClick={() => handleAddCard(phrase)}
-                              size="small"
-                            >
-                              <AddIcon />
-                            </IconButton>
-                          </Tooltip>
+                        
+                        {story.canAddCardsToDeck && (
+                          <TableCell align="right">
+                            {phrase.isAlreadyInDeck || addedWords.has(phrase.id) ? (
+                              <Chip
+                                icon={<CheckIcon fontSize="small" />}
+                                label={t("storyReader.inDeck", "In Deck")}
+                                color="success"
+                                size="small"
+                                variant="outlined"
+                              />
+                            ) : (
+                              <Tooltip title={t("storyReader.addToDeck", "Add to Deck")}>
+                                <IconButton
+                                  color="primary"
+                                  onClick={() => handleAddCard(phrase)}
+                                  size="small"
+                                >
+                                  <AddIcon />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                          </TableCell>
                         )}
-                      </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
