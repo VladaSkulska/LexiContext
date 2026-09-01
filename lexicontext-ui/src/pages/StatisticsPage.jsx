@@ -76,17 +76,22 @@ export const StatisticsPage = ({ isDarkMode, toggleTheme }) => {
 
         const activityResponse = await axiosClient.get("/Statistics/activity");
 
-        // Залишаю цей лог, щоб ти могла перевірити в консолі (F12), що присилає база
         console.log("API Response (Activity):", activityResponse.data);
 
-        const realData = activityResponse.data.map((item) => ({
-          date: item.date ? item.date.split("T")[0] : "",
-          count: item.count || item.cardsStudied || item.CardsStudied || 0,
-        }));
+        const realData = activityResponse.data.map((item) => {
+          if (!item.date) return null;
+          
+          const dateString = item.date.split("T")[0];
+          
+          return {
+            date: dateString,
+            count: item.count || item.cardsStudied || item.CardsStudied || 0,
+          };
+        }).filter(item => item !== null);
 
         setActivityData(realData);
       } catch (error) {
-        console.error("Помилка завантаження статистики:", error);
+        console.error("Error loading statistics:", error);
       } finally {
         setIsLoading(false);
       }
@@ -234,17 +239,27 @@ export const StatisticsPage = ({ isDarkMode, toggleTheme }) => {
                       new Date().setFullYear(new Date().getFullYear() - 1),
                     )
                   }
-                  endDate={new Date(new Date().getTime() + 86400000)}
+                  endDate={new Date()}
                   values={activityData}
                   classForValue={(value) => {
                     if (!value || value.count === 0) return "color-empty";
                     return `color-scale-${Math.min(value.count, 4)}`;
                   }}
-                  tooltipDataAttrs={(value) => ({
-                    "data-tooltip-content": value?.date
-                      ? `${value.date}: ${value.count} cards`
-                      : "No activity",
-                  })}
+                  tooltipDataAttrs={(value) => {
+                    if (!value || !value.date) {
+                      return { "data-tooltip-content": t("statistics.activity.noActivity", "No activity") };
+                    }
+                    
+                    const formattedDate = new Date(value.date).toLocaleDateString(i18n.language, {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    });
+                    
+                    return {
+                      "data-tooltip-content": `${formattedDate}: ${value.count} ${t("statistics.activity.cardsTooltip", "cards")}`
+                    };
+                  }}
                 />
                 <ReactTooltip />
               </Box>
