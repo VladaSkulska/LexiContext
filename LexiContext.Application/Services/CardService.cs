@@ -22,6 +22,7 @@ namespace LexiContext.Application.Services
         private readonly IValidator<CreateCardDto> _createCardValidator;
         private readonly IValidator<UpdateCardDto> _updateCardValidator;
         private readonly IClassroomRepository _classroomRepository;
+        private readonly IUserActivityRepository _activityRepository;
 
         public CardService(ICardRepository cardRepository,
             IDeckRepository deckRepository,
@@ -31,7 +32,8 @@ namespace LexiContext.Application.Services
             IValidator<CreateCardDto> createCardValidator,
             IAiContextService aiContextService,
             ILogger<CardService> logger,
-            IClassroomRepository classroomRepository)
+            IClassroomRepository classroomRepository,
+            IUserActivityRepository activityRepository)
         {
             _cardRepository = cardRepository;
             _deckRepository = deckRepository;
@@ -42,6 +44,7 @@ namespace LexiContext.Application.Services
             _aiContextService = aiContextService;
             _logger = logger;
             _classroomRepository = classroomRepository;
+            _activityRepository = activityRepository;
         }
 
         public async Task<CardDto> CreateCardAsync(CreateCardDto dto, Guid userId)
@@ -179,6 +182,8 @@ namespace LexiContext.Application.Services
             {
                 await _progressRepository.UpdateAsync(progress);
             }
+
+            await RecordUserActivityAsync(userId);
         }
 
         public async Task<CardDto> UpdateCardAsync(Guid id, UpdateCardDto dto, Guid userId)
@@ -369,6 +374,31 @@ namespace LexiContext.Application.Services
                 AdditionalMetadata = card.AdditionalMetadata,
                 IsSimplified = card.IsSimplified
             };
+        }
+
+        private async Task RecordUserActivityAsync(Guid userId)
+        {
+            var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
+            var activity = await _activityRepository.GetByDateAsync(userId, today);
+
+            if (activity == null)
+            {
+                await _activityRepository.CreateAsync(new UserActivity
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    Date = today,
+                    CardsStudied = 1,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                });
+            }
+            else
+            {
+                activity.CardsStudied++;
+                activity.UpdatedAt = DateTime.UtcNow;
+                await _activityRepository.UpdateAsync(activity);
+            }
         }
 
         private static ProficiencyLevel GetSimplerLevel(ProficiencyLevel currentLevel)
